@@ -1,14 +1,14 @@
 package v1
 
 import (
-	"github.com/KimNattanan/go-chat-backend/internal/user/usecase"
+	"github.com/KimNattanan/go-chat-backend/internal/profile/usecase"
 	"github.com/KimNattanan/go-chat-backend/pkg/logger"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v5"
 )
 
-// NewUserRoutes -.
-func NewUserRoutes(apiV1Group *echo.Group, profileUseCase usecase.ProfileUseCase, l logger.Interface) {
+// NewProfileRoutes -.
+func NewProfileRoutes(apiV1Group *echo.Group, profileUseCase usecase.ProfileUseCase, l logger.Interface) {
 	r := &V1{
 		profileUseCase: profileUseCase,
 		l:              l,

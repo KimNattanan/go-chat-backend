@@ -2,18 +2,17 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v6.33.4
-// source: internal/user/proto/v1/user.proto
+// source: internal/profile/proto/v1/profile.proto
 
 package v1
 
 import (
-	reflect "reflect"
-	sync "sync"
-	unsafe "unsafe"
-
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
 )
 
 const (
@@ -36,7 +35,7 @@ type Profile struct {
 
 func (x *Profile) Reset() {
 	*x = Profile{}
-	mi := &file_internal_user_proto_v1_user_proto_msgTypes[0]
+	mi := &file_internal_profile_proto_v1_profile_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -48,7 +47,7 @@ func (x *Profile) String() string {
 func (*Profile) ProtoMessage() {}
 
 func (x *Profile) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_user_proto_v1_user_proto_msgTypes[0]
+	mi := &file_internal_profile_proto_v1_profile_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -61,7 +60,7 @@ func (x *Profile) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Profile.ProtoReflect.Descriptor instead.
 func (*Profile) Descriptor() ([]byte, []int) {
-	return file_internal_user_proto_v1_user_proto_rawDescGZIP(), []int{0}
+	return file_internal_profile_proto_v1_profile_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Profile) GetUserId() string {
@@ -110,7 +109,7 @@ type CreateProfileRequest struct {
 
 func (x *CreateProfileRequest) Reset() {
 	*x = CreateProfileRequest{}
-	mi := &file_internal_user_proto_v1_user_proto_msgTypes[1]
+	mi := &file_internal_profile_proto_v1_profile_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -122,7 +121,7 @@ func (x *CreateProfileRequest) String() string {
 func (*CreateProfileRequest) ProtoMessage() {}
 
 func (x *CreateProfileRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_user_proto_v1_user_proto_msgTypes[1]
+	mi := &file_internal_profile_proto_v1_profile_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -135,7 +134,7 @@ func (x *CreateProfileRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateProfileRequest.ProtoReflect.Descriptor instead.
 func (*CreateProfileRequest) Descriptor() ([]byte, []int) {
-	return file_internal_user_proto_v1_user_proto_rawDescGZIP(), []int{1}
+	return file_internal_profile_proto_v1_profile_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *CreateProfileRequest) GetUserId() string {
@@ -168,7 +167,7 @@ type CreateProfileResponse struct {
 
 func (x *CreateProfileResponse) Reset() {
 	*x = CreateProfileResponse{}
-	mi := &file_internal_user_proto_v1_user_proto_msgTypes[2]
+	mi := &file_internal_profile_proto_v1_profile_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -180,7 +179,7 @@ func (x *CreateProfileResponse) String() string {
 func (*CreateProfileResponse) ProtoMessage() {}
 
 func (x *CreateProfileResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_user_proto_v1_user_proto_msgTypes[2]
+	mi := &file_internal_profile_proto_v1_profile_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -193,7 +192,7 @@ func (x *CreateProfileResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateProfileResponse.ProtoReflect.Descriptor instead.
 func (*CreateProfileResponse) Descriptor() ([]byte, []int) {
-	return file_internal_user_proto_v1_user_proto_rawDescGZIP(), []int{2}
+	return file_internal_profile_proto_v1_profile_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *CreateProfileResponse) GetProfile() *Profile {
@@ -203,11 +202,12 @@ func (x *CreateProfileResponse) GetProfile() *Profile {
 	return nil
 }
 
-var File_internal_user_proto_v1_user_proto protoreflect.FileDescriptor
+var File_internal_profile_proto_v1_profile_proto protoreflect.FileDescriptor
 
-const file_internal_user_proto_v1_user_proto_rawDesc = "" +
+const file_internal_profile_proto_v1_profile_proto_rawDesc = "" +
 	"\n" +
-	"!internal/user/proto/v1/user.proto\x12\auser.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc2\x01\n" +
+	"'internal/profile/proto/v1/profile.proto\x12\n" +
+	"profile.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc2\x01\n" +
 	"\aProfile\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x12\n" +
@@ -219,37 +219,37 @@ const file_internal_user_proto_v1_user_proto_rawDesc = "" +
 	"\x14CreateProfileRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x12\n" +
-	"\x04name\x18\x03 \x01(\tR\x04name\"C\n" +
-	"\x15CreateProfileResponse\x12*\n" +
-	"\aprofile\x18\x01 \x01(\v2\x10.user.v1.ProfileR\aprofile2`\n" +
-	"\x0eProfileService\x12N\n" +
-	"\rCreateProfile\x12\x1d.user.v1.CreateProfileRequest\x1a\x1e.user.v1.CreateProfileResponseB\x18Z\x16internal/user/proto/v1b\x06proto3"
+	"\x04name\x18\x03 \x01(\tR\x04name\"F\n" +
+	"\x15CreateProfileResponse\x12-\n" +
+	"\aprofile\x18\x01 \x01(\v2\x13.profile.v1.ProfileR\aprofile2f\n" +
+	"\x0eProfileService\x12T\n" +
+	"\rCreateProfile\x12 .profile.v1.CreateProfileRequest\x1a!.profile.v1.CreateProfileResponseB\x1bZ\x19internal/profile/proto/v1b\x06proto3"
 
 var (
-	file_internal_user_proto_v1_user_proto_rawDescOnce sync.Once
-	file_internal_user_proto_v1_user_proto_rawDescData []byte
+	file_internal_profile_proto_v1_profile_proto_rawDescOnce sync.Once
+	file_internal_profile_proto_v1_profile_proto_rawDescData []byte
 )
 
-func file_internal_user_proto_v1_user_proto_rawDescGZIP() []byte {
-	file_internal_user_proto_v1_user_proto_rawDescOnce.Do(func() {
-		file_internal_user_proto_v1_user_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_internal_user_proto_v1_user_proto_rawDesc), len(file_internal_user_proto_v1_user_proto_rawDesc)))
+func file_internal_profile_proto_v1_profile_proto_rawDescGZIP() []byte {
+	file_internal_profile_proto_v1_profile_proto_rawDescOnce.Do(func() {
+		file_internal_profile_proto_v1_profile_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_internal_profile_proto_v1_profile_proto_rawDesc), len(file_internal_profile_proto_v1_profile_proto_rawDesc)))
 	})
-	return file_internal_user_proto_v1_user_proto_rawDescData
+	return file_internal_profile_proto_v1_profile_proto_rawDescData
 }
 
-var file_internal_user_proto_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_internal_user_proto_v1_user_proto_goTypes = []any{
-	(*Profile)(nil),               // 0: user.v1.Profile
-	(*CreateProfileRequest)(nil),  // 1: user.v1.CreateProfileRequest
-	(*CreateProfileResponse)(nil), // 2: user.v1.CreateProfileResponse
+var file_internal_profile_proto_v1_profile_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_internal_profile_proto_v1_profile_proto_goTypes = []any{
+	(*Profile)(nil),               // 0: profile.v1.Profile
+	(*CreateProfileRequest)(nil),  // 1: profile.v1.CreateProfileRequest
+	(*CreateProfileResponse)(nil), // 2: profile.v1.CreateProfileResponse
 	(*timestamppb.Timestamp)(nil), // 3: google.protobuf.Timestamp
 }
-var file_internal_user_proto_v1_user_proto_depIdxs = []int32{
-	3, // 0: user.v1.Profile.created_at:type_name -> google.protobuf.Timestamp
-	3, // 1: user.v1.Profile.updated_at:type_name -> google.protobuf.Timestamp
-	0, // 2: user.v1.CreateProfileResponse.profile:type_name -> user.v1.Profile
-	1, // 3: user.v1.ProfileService.CreateProfile:input_type -> user.v1.CreateProfileRequest
-	2, // 4: user.v1.ProfileService.CreateProfile:output_type -> user.v1.CreateProfileResponse
+var file_internal_profile_proto_v1_profile_proto_depIdxs = []int32{
+	3, // 0: profile.v1.Profile.created_at:type_name -> google.protobuf.Timestamp
+	3, // 1: profile.v1.Profile.updated_at:type_name -> google.protobuf.Timestamp
+	0, // 2: profile.v1.CreateProfileResponse.profile:type_name -> profile.v1.Profile
+	1, // 3: profile.v1.ProfileService.CreateProfile:input_type -> profile.v1.CreateProfileRequest
+	2, // 4: profile.v1.ProfileService.CreateProfile:output_type -> profile.v1.CreateProfileResponse
 	4, // [4:5] is the sub-list for method output_type
 	3, // [3:4] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name
@@ -257,26 +257,26 @@ var file_internal_user_proto_v1_user_proto_depIdxs = []int32{
 	0, // [0:3] is the sub-list for field type_name
 }
 
-func init() { file_internal_user_proto_v1_user_proto_init() }
-func file_internal_user_proto_v1_user_proto_init() {
-	if File_internal_user_proto_v1_user_proto != nil {
+func init() { file_internal_profile_proto_v1_profile_proto_init() }
+func file_internal_profile_proto_v1_profile_proto_init() {
+	if File_internal_profile_proto_v1_profile_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_user_proto_v1_user_proto_rawDesc), len(file_internal_user_proto_v1_user_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_profile_proto_v1_profile_proto_rawDesc), len(file_internal_profile_proto_v1_profile_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_internal_user_proto_v1_user_proto_goTypes,
-		DependencyIndexes: file_internal_user_proto_v1_user_proto_depIdxs,
-		MessageInfos:      file_internal_user_proto_v1_user_proto_msgTypes,
+		GoTypes:           file_internal_profile_proto_v1_profile_proto_goTypes,
+		DependencyIndexes: file_internal_profile_proto_v1_profile_proto_depIdxs,
+		MessageInfos:      file_internal_profile_proto_v1_profile_proto_msgTypes,
 	}.Build()
-	File_internal_user_proto_v1_user_proto = out.File
-	file_internal_user_proto_v1_user_proto_goTypes = nil
-	file_internal_user_proto_v1_user_proto_depIdxs = nil
+	File_internal_profile_proto_v1_profile_proto = out.File
+	file_internal_profile_proto_v1_profile_proto_goTypes = nil
+	file_internal_profile_proto_v1_profile_proto_depIdxs = nil
 }

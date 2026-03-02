@@ -2,13 +2,12 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v6.33.4
-// source: internal/user/proto/v1/user.proto
+// source: internal/profile/proto/v1/profile.proto
 
 package v1
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -20,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ProfileService_CreateProfile_FullMethodName = "/user.v1.ProfileService/CreateProfile"
+	ProfileService_CreateProfile_FullMethodName = "/profile.v1.ProfileService/CreateProfile"
 )
 
 // ProfileServiceClient is the client API for ProfileService service.
@@ -109,7 +108,7 @@ func _ProfileService_CreateProfile_Handler(srv interface{}, ctx context.Context,
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ProfileService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "user.v1.ProfileService",
+	ServiceName: "profile.v1.ProfileService",
 	HandlerType: (*ProfileServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -118,5 +117,5 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "internal/user/proto/v1/user.proto",
+	Metadata: "internal/profile/proto/v1/profile.proto",
 }

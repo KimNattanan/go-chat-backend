@@ -1,8 +1,8 @@
 package rest
 
 import (
-	v1 "github.com/KimNattanan/go-chat-backend/internal/user/handler/grpc/v1"
-	"github.com/KimNattanan/go-chat-backend/internal/user/usecase"
+	v1 "github.com/KimNattanan/go-chat-backend/internal/profile/handler/grpc/v1"
+	"github.com/KimNattanan/go-chat-backend/internal/profile/usecase"
 	"github.com/KimNattanan/go-chat-backend/pkg/logger"
 	pbgrpc "google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"

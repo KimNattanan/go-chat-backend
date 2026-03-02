@@ -2,9 +2,9 @@ package rest
 
 import (
 	"github.com/KimNattanan/go-chat-backend/internal/platform/config"
-	"github.com/KimNattanan/go-chat-backend/internal/user/handler/rest/middleware"
-	v1 "github.com/KimNattanan/go-chat-backend/internal/user/handler/rest/v1"
-	"github.com/KimNattanan/go-chat-backend/internal/user/usecase"
+	"github.com/KimNattanan/go-chat-backend/internal/profile/handler/rest/middleware"
+	v1 "github.com/KimNattanan/go-chat-backend/internal/profile/handler/rest/v1"
+	"github.com/KimNattanan/go-chat-backend/internal/profile/usecase"
 	"github.com/KimNattanan/go-chat-backend/pkg/logger"
 	"github.com/labstack/echo/v5"
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -30,6 +30,6 @@ func NewRouter(e *echo.Echo, cfg *config.Config, profileUseCase usecase.ProfileU
 	// Routers
 	apiV1Group := e.Group("/v1")
 	{
-		v1.NewUserRoutes(apiV1Group, profileUseCase, l)
+		v1.NewProfileRoutes(apiV1Group, profileUseCase, l)
 	}
 }

@@ -1,8 +1,8 @@
 package v1
 
 import (
-	"github.com/KimNattanan/go-chat-backend/internal/user/entity"
-	v1 "github.com/KimNattanan/go-chat-backend/internal/user/proto/v1"
+	"github.com/KimNattanan/go-chat-backend/internal/profile/entity"
+	v1 "github.com/KimNattanan/go-chat-backend/internal/profile/proto/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 

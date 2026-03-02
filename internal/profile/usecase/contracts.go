@@ -3,7 +3,7 @@ package usecase
 import (
 	"context"
 
-	"github.com/KimNattanan/go-chat-backend/internal/user/entity"
+	"github.com/KimNattanan/go-chat-backend/internal/profile/entity"
 )
 
 type (
