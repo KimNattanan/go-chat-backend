@@ -12,7 +12,7 @@ type (
 		App     App
 		HTTP    HTTP
 		Log     Log
-		PG      PG
+		DB      DB
 		GRPC    GRPC
 		RMQ     RMQ
 		Swagger Swagger
@@ -35,7 +35,7 @@ type (
 	}
 
 	// DB -.
-	PG struct {
+	DB struct {
 		Host     string `env:"DB_HOST,required"`
 		Port     string `env:"DB_PORT,required"`
 		User     string `env:"DB_USER,required"`
@@ -68,9 +68,9 @@ func NewConfig() (*Config, error) {
 	if err := env.Parse(cfg); err != nil {
 		return nil, fmt.Errorf("config error: %w", err)
 	}
-	cfg.PG.DSN = fmt.Sprintf(
+	cfg.DB.DSN = fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		cfg.PG.Host, cfg.PG.Port, cfg.PG.User, cfg.PG.Password, cfg.PG.Name,
+		cfg.DB.Host, cfg.DB.Port, cfg.DB.User, cfg.DB.Password, cfg.DB.Name,
 	)
 
 	return cfg, nil
