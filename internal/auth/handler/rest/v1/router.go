@@ -16,6 +16,8 @@ func NewAuthRoutes(apiV1Group *echo.Group, userUseCase usecase.UserUseCase, sess
 		v:              validator.New(validator.WithRequiredStructEnabled()),
 	}
 
+	// Public Routes
+
 	authGroup := apiV1Group.Group("/auth")
 	{
 		authGroup.POST("/login", r.login)
@@ -27,13 +29,15 @@ func NewAuthRoutes(apiV1Group *echo.Group, userUseCase usecase.UserUseCase, sess
 		userGroup.GET("/email/:email", r.findUserByEmail)
 	}
 
-	apiV1ProtectedGroup := apiV1Group.Group("")
-	apiV1ProtectedGroup.Use(jwtMiddleware)
+	// Private Routes
 
-	authProtectedGroup := apiV1ProtectedGroup.Group("/auth")
+	apiV1PrivateGroup := apiV1Group.Group("")
+	apiV1PrivateGroup.Use(jwtMiddleware)
+
+	authPrivateGroup := apiV1PrivateGroup.Group("/auth")
 	{
-		authProtectedGroup.GET("/me", r.getUser)
-		authProtectedGroup.POST("/logout", r.logout)
-		authProtectedGroup.DELETE("/me", r.deleteUser)
+		authPrivateGroup.GET("/me", r.getUser)
+		authPrivateGroup.POST("/logout", r.logout)
+		authPrivateGroup.DELETE("/me", r.deleteUser)
 	}
 }

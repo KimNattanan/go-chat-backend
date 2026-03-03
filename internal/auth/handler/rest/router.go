@@ -17,7 +17,7 @@ import (
 // @version     1.0
 // @host        localhost:8080
 // @BasePath    /v1
-func NewRouter(e *echo.Echo, cfg *config.Config, userUseCase usecase.UserUseCase, sessionUseCase usecase.SessionUseCase, l logger.Interface) {
+func NewRouter(e *echo.Echo, cfg *config.Config, userUseCase usecase.UserUseCase, sessionUseCase usecase.SessionUseCase, l logger.Interface, jwtMiddleware echo.MiddlewareFunc) {
 	// Options
 	e.Use(middleware.Logger(l))
 	e.Use(middleware.Recovery(l))
@@ -30,6 +30,6 @@ func NewRouter(e *echo.Echo, cfg *config.Config, userUseCase usecase.UserUseCase
 	// Routers
 	apiV1Group := e.Group("/v1")
 	{
-		v1.NewAuthRoutes(apiV1Group, userUseCase, sessionUseCase, l)
+		v1.NewAuthRoutes(apiV1Group, userUseCase, sessionUseCase, l, jwtMiddleware)
 	}
 }
