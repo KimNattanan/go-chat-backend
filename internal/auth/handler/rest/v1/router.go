@@ -8,7 +8,7 @@ import (
 )
 
 // NewProfileRoutes -.
-func NewAuthRoutes(apiV1Group *echo.Group, userUseCase usecase.UserUseCase, sessionUseCase usecase.SessionUseCase, l logger.Interface) {
+func NewAuthRoutes(apiV1Group *echo.Group, userUseCase usecase.UserUseCase, sessionUseCase usecase.SessionUseCase, l logger.Interface, jwtMiddleware echo.MiddlewareFunc) {
 	r := &V1{
 		userUseCase:    userUseCase,
 		sessionUseCase: sessionUseCase,
@@ -20,13 +20,20 @@ func NewAuthRoutes(apiV1Group *echo.Group, userUseCase usecase.UserUseCase, sess
 	{
 		authGroup.POST("/login", r.login)
 		authGroup.POST("/register", r.register)
-		authGroup.POST("/logout", r.logout)
 	}
 	userGroup := apiV1Group.Group("/users")
 	{
 		userGroup.GET("/:id", r.findUserByID)
 		userGroup.GET("/email/:email", r.findUserByEmail)
-		userGroup.DELETE("/:id", r.deleteUser)
 	}
 
+	apiV1ProtectedGroup := apiV1Group.Group("")
+	apiV1ProtectedGroup.Use(jwtMiddleware)
+
+	authProtectedGroup := apiV1ProtectedGroup.Group("/auth")
+	{
+		authProtectedGroup.GET("/me", r.getUser)
+		authProtectedGroup.POST("/logout", r.logout)
+		authProtectedGroup.DELETE("/me", r.deleteUser)
+	}
 }
