@@ -11,7 +11,7 @@ import (
 // NewRouter -.
 func NewRouter(app *pbgrpc.Server, profileUseCase usecase.ProfileUseCase, l logger.Interface) {
 	{
-		v1.NewUserRoutes(app, profileUseCase, l)
+		v1.NewProfileRoutes(app, profileUseCase, l)
 	}
 	reflection.Register(app)
 }

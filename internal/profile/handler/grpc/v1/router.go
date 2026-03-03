@@ -8,8 +8,8 @@ import (
 	pbgrpc "google.golang.org/grpc"
 )
 
-// NewUserRoutes -.
-func NewUserRoutes(app *pbgrpc.Server, profileUseCase usecase.ProfileUseCase, l logger.Interface) {
+// NewProfileRoutes -.
+func NewProfileRoutes(app *pbgrpc.Server, profileUseCase usecase.ProfileUseCase, l logger.Interface) {
 	r := &V1{
 		profileUseCase: profileUseCase,
 		l:              l,

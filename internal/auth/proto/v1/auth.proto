@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package auth.v1;
+
+option go_package = "internal/auth/proto/v1";
+
+import "google/protobuf/timestamp.proto";
+
+// Models
+
+message User {
+  string id = 1;
+  string email = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+}
+
+// Requests
+
+message FindUserByIDRequest {
+  string id = 1;
+}
+
+message FindUserByEmailRequest {
+  string email = 1;
+}
+
+message RefreshTokenRequest {
+  string user_id = 1;
+  string session_id = 2;
+  string new_session_id = 3;
+  google.protobuf.Timestamp expires_at = 4;
+}
+
+// Responses
+
+message UserResponse {
+  User user = 1;
+}
+
+message RefreshTokenResponse {
+  string user_id = 1;
+  string new_session_id = 2;
+}
+
+// Services
+
+service AuthService {
+  rpc FindUserByID(FindUserByIDRequest) returns (UserResponse);
+  rpc FindUserByEmail(FindUserByEmailRequest) returns (UserResponse);
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+}

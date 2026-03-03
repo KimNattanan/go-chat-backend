@@ -6,6 +6,8 @@ option go_package = "internal/profile/proto/v1";
 
 import "google/protobuf/timestamp.proto";
 
+// Models
+
 message Profile {
   string user_id = 1;
   string email = 2;
@@ -14,15 +16,21 @@ message Profile {
   google.protobuf.Timestamp updated_at = 5;
 }
 
+// Requests
+
 message CreateProfileRequest {
   string user_id = 1;
   string email = 2;
   string name = 3;
 }
 
+// Responses
+
 message CreateProfileResponse {
   Profile profile = 1;
 }
+
+// Services
 
 service ProfileService {
   rpc CreateProfile(CreateProfileRequest) returns (CreateProfileResponse);

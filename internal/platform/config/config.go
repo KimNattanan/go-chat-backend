@@ -16,10 +16,12 @@ type (
 		GRPC    GRPC
 		RMQ     RMQ
 		Swagger Swagger
+		JWT     JWT
 	}
 
 	// App -.
 	App struct {
+		ENV     string `env:"APP_ENV,required"`
 		Name    string `env:"APP_NAME,required"`
 		Version string `env:"APP_VERSION,required"`
 	}
@@ -59,6 +61,12 @@ type (
 	// Swagger -.
 	Swagger struct {
 		Enabled bool `env:"SWAGGER_ENABLED" envDefault:"false"`
+	}
+
+	// JWT -.
+	JWT struct {
+		AccessTTL  int `env:"ACCESS_TTL" envDefault:"3600"`   // 1 hour, in seconds
+		RefreshTTL int `env:"ACCESS_TTL" envDefault:"604800"` // 7 days
 	}
 )
 

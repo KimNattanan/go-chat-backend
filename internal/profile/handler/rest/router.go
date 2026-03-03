@@ -2,7 +2,7 @@ package rest
 
 import (
 	"github.com/KimNattanan/go-chat-backend/internal/platform/config"
-	"github.com/KimNattanan/go-chat-backend/internal/profile/handler/rest/middleware"
+	"github.com/KimNattanan/go-chat-backend/internal/platform/middleware"
 	v1 "github.com/KimNattanan/go-chat-backend/internal/profile/handler/rest/v1"
 	"github.com/KimNattanan/go-chat-backend/internal/profile/usecase"
 	"github.com/KimNattanan/go-chat-backend/pkg/logger"
