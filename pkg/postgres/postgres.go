@@ -20,7 +20,7 @@ const (
 type Postgres struct {
 	connAttempts int
 	connTimeout  time.Duration
-	db           *gorm.DB
+	DB           *gorm.DB
 	sqlDB        *sql.DB
 }
 
@@ -39,7 +39,7 @@ func New(dsn string, opts ...Option) (*Postgres, error) {
 	var err error
 
 	for pg.connAttempts > 0 {
-		pg.db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+		pg.DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 		if err == nil {
 			break
 		}
@@ -55,7 +55,7 @@ func New(dsn string, opts ...Option) (*Postgres, error) {
 		return nil, fmt.Errorf("postgres - NewPostgres - connAttempts == 0: %w", err)
 	}
 
-	pg.sqlDB, err = pg.db.DB()
+	pg.sqlDB, err = pg.DB.DB()
 	if err != nil {
 		return nil, fmt.Errorf("postgres - NewPostgres - pg.db.DB: %w", err)
 	}

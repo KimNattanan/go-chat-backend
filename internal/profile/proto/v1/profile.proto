@@ -24,14 +24,23 @@ message CreateProfileRequest {
   string name = 3;
 }
 
+message DeleteProfileRequest {
+  string user_id = 1;
+}
+
 // Responses
 
-message CreateProfileResponse {
+message ProfileResponse {
   Profile profile = 1;
+}
+
+message DeleteProfileResponse {
+  string message = 1;
 }
 
 // Services
 
 service ProfileService {
-  rpc CreateProfile(CreateProfileRequest) returns (CreateProfileResponse);
+  rpc CreateProfile(CreateProfileRequest) returns (ProfileResponse);
+  rpc DeleteProfile(DeleteProfileRequest) returns (DeleteProfileResponse);
 }

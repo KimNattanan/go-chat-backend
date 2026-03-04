@@ -13,6 +13,7 @@ type (
 		HTTP    HTTP
 		Log     Log
 		DB      DB
+		Redis   Redis
 		GRPC    GRPC
 		RMQ     RMQ
 		Swagger Swagger
@@ -46,6 +47,13 @@ type (
 		DSN      string
 	}
 
+	// Redis -.
+	Redis struct {
+		Address  string `env:"REDIS_ADDRESS,required"`
+		Password string `env:"REDIS_PASSWORD,required"`
+		DB       int    `env:"REDIS_DB,required"`
+	}
+
 	// GRPC -.
 	GRPC struct {
 		Port string `env:"GRPC_PORT,required"`
@@ -65,8 +73,9 @@ type (
 
 	// JWT -.
 	JWT struct {
-		AccessTTL  int `env:"ACCESS_TTL" envDefault:"3600"`   // 1 hour, in seconds
-		RefreshTTL int `env:"ACCESS_TTL" envDefault:"604800"` // 7 days
+		Secret     string `env:"JWT_SECRET,required"`
+		AccessTTL  int    `env:"ACCESS_TTL" envDefault:"3600"`   // 1 hour, in seconds
+		RefreshTTL int    `env:"ACCESS_TTL" envDefault:"604800"` // 7 days
 	}
 )
 

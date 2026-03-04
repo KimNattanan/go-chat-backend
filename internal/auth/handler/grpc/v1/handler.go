@@ -11,8 +11,7 @@ import (
 type V1 struct {
 	v1.AuthServiceServer
 
-	userUseCase    usecase.UserUseCase
-	sessionUseCase usecase.SessionUseCase
-	l              logger.Interface
-	v              *validator.Validate
+	authUseCase usecase.AuthUseCase
+	l           logger.Interface
+	v           *validator.Validate
 }

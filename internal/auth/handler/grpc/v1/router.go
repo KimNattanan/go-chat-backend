@@ -9,10 +9,9 @@ import (
 )
 
 // NewAuthRoutes -.
-func NewAuthRoutes(app *pbgrpc.Server, userUseCase usecase.UserUseCase, sessionUseCase usecase.SessionUseCase, l logger.Interface) {
+func NewAuthRoutes(app *pbgrpc.Server, authUseCase usecase.AuthUseCase, l logger.Interface) {
 	r := &V1{
-		userUseCase:    userUseCase,
-		sessionUseCase: sessionUseCase,
+		authUseCase:    authUseCase,
 		l:              l,
 		v:              validator.New(validator.WithRequiredStructEnabled()),
 	}

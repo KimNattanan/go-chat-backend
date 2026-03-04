@@ -2,7 +2,6 @@ package rest
 
 import (
 	"github.com/KimNattanan/go-chat-backend/internal/platform/config"
-	"github.com/KimNattanan/go-chat-backend/internal/platform/middleware"
 	v1 "github.com/KimNattanan/go-chat-backend/internal/profile/handler/rest/v1"
 	"github.com/KimNattanan/go-chat-backend/internal/profile/usecase"
 	"github.com/KimNattanan/go-chat-backend/pkg/logger"
@@ -18,18 +17,14 @@ import (
 // @host        localhost:8080
 // @BasePath    /v1
 func NewRouter(e *echo.Echo, cfg *config.Config, profileUseCase usecase.ProfileUseCase, l logger.Interface) {
-	// Options
-	e.Use(middleware.Logger(l))
-	e.Use(middleware.Recovery(l))
-
 	// Swagger
 	if cfg.Swagger.Enabled {
-		e.GET("/swagger/*", echoSwagger.WrapHandler)
+		e.GET("/profile/swagger/*", echoSwagger.WrapHandler)
 	}
 
 	// Routers
-	apiV1Group := e.Group("/v1")
+	apiPublicGroup := e.Group("/v1")
 	{
-		v1.NewProfileRoutes(apiV1Group, profileUseCase, l)
+		v1.NewProfileRoutes(apiPublicGroup, profileUseCase, l)
 	}
 }

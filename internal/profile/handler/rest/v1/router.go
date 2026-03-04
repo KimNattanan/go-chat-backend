@@ -8,16 +8,19 @@ import (
 )
 
 // NewProfileRoutes -.
-func NewProfileRoutes(apiV1Group *echo.Group, profileUseCase usecase.ProfileUseCase, l logger.Interface) {
+func NewProfileRoutes(apiPublicGroup *echo.Group, profileUseCase usecase.ProfileUseCase, l logger.Interface) {
 	r := &V1{
 		profileUseCase: profileUseCase,
 		l:              l,
 		v:              validator.New(validator.WithRequiredStructEnabled()),
 	}
 
-	profileGroup := apiV1Group.Group("/profiles")
+	// Public Routes
+
+	profilePublicGroup := apiPublicGroup.Group("/profiles")
 	{
-		profileGroup.GET("/:id", r.findProfileByID)
-		profileGroup.PATCH("/:id", r.patchProfile)
+		profilePublicGroup.GET("/:id", r.findProfileByID)
+		profilePublicGroup.PATCH("/:id", r.patchProfile)
 	}
+
 }

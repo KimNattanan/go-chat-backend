@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Room struct {
@@ -13,4 +14,9 @@ type Room struct {
 	UpdatedAt time.Time `json:"updated_at"`
 
 	Memberships []Membership `gorm:"foreignKey:RoomID"`
+}
+
+func (r *Room) BeforeCreate(db *gorm.DB) (err error) {
+	r.ID = uuid.New()
+	return
 }

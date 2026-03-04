@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Message struct {
@@ -13,4 +14,9 @@ type Message struct {
 	Content   string    `json:"content"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func (m *Message) BeforeCreate(db *gorm.DB) (err error) {
+	m.ID = uuid.New()
+	return
 }

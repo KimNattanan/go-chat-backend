@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	authProtoV1 "github.com/KimNattanan/go-chat-backend/internal/auth/proto/v1"
+	authPb "github.com/KimNattanan/go-chat-backend/internal/auth/proto/v1"
 	"github.com/KimNattanan/go-chat-backend/internal/platform/config"
 	"github.com/KimNattanan/go-chat-backend/pkg/logger"
 	"github.com/KimNattanan/go-chat-backend/pkg/responses"
@@ -25,13 +25,13 @@ func readCookie(c *echo.Context, name string) (string, error) {
 	return cookie.Value, nil
 }
 
-func JWTMiddleware(l logger.Interface, jwtMaker *token.JWTMaker, cfg *config.Config, authServiceClient authProtoV1.AuthServiceClient) echo.MiddlewareFunc {
+func JWTMiddleware(l logger.Interface, cfg *config.Config, jwtMaker *token.JWTMaker, authGrpcClient authPb.AuthServiceClient) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
 			accessToken, err := readCookie(c, "access-token")
 			if err != nil {
 				l.Error(err, "JWTMiddleware")
-				return responses.ErrorResponse(c, http.StatusInternalServerError, "failed to read cookie")
+				return responses.ErrorResponseCustom(c, http.StatusInternalServerError, "failed to read cookie")
 			}
 			accessClaims, err := jwtMaker.VerfiyToken(accessToken)
 			if err == nil {
@@ -41,23 +41,23 @@ func JWTMiddleware(l logger.Interface, jwtMaker *token.JWTMaker, cfg *config.Con
 			refreshToken, err := readCookie(c, "refresh-token")
 			if err != nil {
 				l.Error(err, "JWTMiddleware")
-				return responses.ErrorResponse(c, http.StatusInternalServerError, "failed to read cookie")
+				return responses.ErrorResponseCustom(c, http.StatusInternalServerError, "failed to read cookie")
 			}
 			refreshClaims, err := jwtMaker.VerfiyToken(refreshToken)
 			if err != nil {
 				l.Error(err, "JWTMiddleware")
-				return responses.ErrorResponse(c, http.StatusUnauthorized, "unauthorized")
+				return responses.ErrorResponseCustom(c, http.StatusUnauthorized, "unauthorized")
 			}
 
 			newAccessToken, newAccessClaims, err := jwtMaker.CreateToken(refreshClaims.ID, time.Second*time.Duration(cfg.JWT.AccessTTL))
 			if err != nil {
 				l.Error(err, "JWTMiddleware")
-				return responses.ErrorResponse(c, http.StatusInternalServerError, "failed to create token")
+				return responses.ErrorResponseCustom(c, http.StatusInternalServerError, "failed to create token")
 			}
 			newRefreshToken, newRefreshClaims, err := jwtMaker.CreateToken(refreshClaims.ID, time.Second*time.Duration(cfg.JWT.RefreshTTL))
 			if err != nil {
 				l.Error(err, "JWTMiddleware")
-				return responses.ErrorResponse(c, http.StatusInternalServerError, "failed to create token")
+				return responses.ErrorResponseCustom(c, http.StatusInternalServerError, "failed to create token")
 			}
 
 			// grpc ->
@@ -65,7 +65,7 @@ func JWTMiddleware(l logger.Interface, jwtMaker *token.JWTMaker, cfg *config.Con
 			//   s := FindSessionByID(SessionID)
 			//   RevokeSession(SessionID)
 			//   CreateSession(NewSessionID, u.ID, s.CreatedAt, ExpiresAt)
-			if _, err = authServiceClient.RefreshToken(c.Request().Context(), &authProtoV1.RefreshTokenRequest{
+			if _, err = authGrpcClient.RefreshToken(c.Request().Context(), &authPb.RefreshTokenRequest{
 				UserId:       refreshClaims.ID,
 				SessionId:    refreshClaims.RegisteredClaims.ID,
 				NewSessionId: newRefreshClaims.RegisteredClaims.ID,
@@ -74,9 +74,9 @@ func JWTMiddleware(l logger.Interface, jwtMaker *token.JWTMaker, cfg *config.Con
 				l.Error(err, "JWTMiddleware")
 				st, ok := status.FromError(err)
 				if !ok {
-					return responses.ErrorResponse(c, http.StatusInternalServerError, "internal server error")
+					return responses.ErrorResponseCustom(c, http.StatusInternalServerError, "internal server error")
 				}
-				return responses.ErrorResponse(c, responses.GrpcToHttpStatus(st.Code()), st.Message())
+				return responses.ErrorResponseCustom(c, responses.GrpcToHttpStatus(st.Code()), st.Message())
 			}
 
 			c.SetCookie(&http.Cookie{

@@ -3,20 +3,21 @@ package repo
 import (
 	"context"
 
-	"github.com/KimNattanan/go-chat-backend/internal/auth/entity"
+	"github.com/KimNattanan/go-chat-backend/internal/chat/entity"
 )
 
 type (
-	RoomUseCase interface {
-		Create(ctx context.Context, user *entity.User) error
-		FindByID(ctx context.Context, id string) (*entity.User, error)
-		Delete(ctx context.Context, userID string) error
+	RoomRepo interface {
+		Create(ctx context.Context, room *entity.Room) error
+		FindByID(ctx context.Context, id string) (*entity.Room, error)
+		Patch(ctx context.Context, id string, room *entity.Room) error
+		Delete(ctx context.Context, id string) error
 	}
 	MembershipRepo interface {
-		Create(ctx context.Context, session *entity.Session) error
-		FindByID(ctx context.Context, id string) (*entity.Session, error)
-		FindByUserID(ctx context.Context, userID string) ([]*entity.Session, error)
-		Revoke(ctx context.Context, id string) error
-		Delete(ctx context.Context, id string) error
+		Create(ctx context.Context, membership *entity.Membership) error
+		FindByRoomID(ctx context.Context, roomID string) ([]*entity.Membership, error)
+		FindByUserID(ctx context.Context, userID string) ([]*entity.Membership, error)
+		FindByRoomIDAndUserID(ctx context.Context, roomID, userID string) (*entity.Membership, error)
+		Delete(ctx context.Context, roomID, userID string) error
 	}
 )

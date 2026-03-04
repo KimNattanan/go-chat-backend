@@ -5,22 +5,23 @@ import (
 	"time"
 
 	"github.com/KimNattanan/go-chat-backend/internal/auth/entity"
+	"github.com/KimNattanan/go-chat-backend/pkg/token"
 )
 
 type (
-	UserUseCase interface {
-		Login(ctx context.Context, email, password string) (*entity.User, error)
-		Register(ctx context.Context, email, password, name string) (*entity.User, error)
-		FindByID(ctx context.Context, id string) (*entity.User, error)
-		FindByEmail(ctx context.Context, email string) (*entity.User, error)
-		Delete(ctx context.Context, userID string) error
-	}
-	SessionUseCase interface {
-		Create(ctx context.Context, session *entity.Session) error
-		FindByID(ctx context.Context, id string) (*entity.Session, error)
-		FindByUserID(ctx context.Context, userID string) ([]*entity.Session, error)
-		Revoke(ctx context.Context, id string) error
-		Delete(ctx context.Context, id string) error
-		Refresh(ctx context.Context, userID, id, newID string, expiresAt time.Time) error
+	AuthUseCase interface {
+		FindUserByID(ctx context.Context, id string) (*entity.User, error)
+		FindUserByEmail(ctx context.Context, email string) (*entity.User, error)
+		DeleteUser(ctx context.Context, id string) error
+
+		CreateSession(ctx context.Context, session *entity.Session) error
+		FindSessionByID(ctx context.Context, id string) (*entity.Session, error)
+		FindSessionByUserID(ctx context.Context, userID string) ([]*entity.Session, error)
+		RevokeSession(ctx context.Context, id string) error
+		DeleteSession(ctx context.Context, id string) error
+
+		Login(ctx context.Context, email, password string) (*entity.User, string, *token.UserClaims, string, *token.UserClaims, error)
+		Register(ctx context.Context, email, password, name string) (*entity.User, string, *token.UserClaims, string, *token.UserClaims, error)
+		Refresh(ctx context.Context, userID, sessionID, newID string, expiresAt time.Time) error
 	}
 )

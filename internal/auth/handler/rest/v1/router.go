@@ -7,34 +7,30 @@ import (
 	"github.com/labstack/echo/v5"
 )
 
-// NewProfileRoutes -.
-func NewAuthRoutes(apiV1Group *echo.Group, userUseCase usecase.UserUseCase, sessionUseCase usecase.SessionUseCase, l logger.Interface, jwtMiddleware echo.MiddlewareFunc) {
+// NewAuthRoutes -.
+func NewAuthRoutes(apiPublicGroup, apiPrivateGroup *echo.Group, authUseCase usecase.AuthUseCase, l logger.Interface) {
 	r := &V1{
-		userUseCase:    userUseCase,
-		sessionUseCase: sessionUseCase,
-		l:              l,
-		v:              validator.New(validator.WithRequiredStructEnabled()),
+		authUseCase: authUseCase,
+		l:           l,
+		v:           validator.New(validator.WithRequiredStructEnabled()),
 	}
 
 	// Public Routes
 
-	authGroup := apiV1Group.Group("/auth")
+	authPublicGroup := apiPublicGroup.Group("/auth")
 	{
-		authGroup.POST("/login", r.login)
-		authGroup.POST("/register", r.register)
+		authPublicGroup.POST("/login", r.login)
+		authPublicGroup.POST("/register", r.register)
 	}
-	userGroup := apiV1Group.Group("/users")
+	userPublicGroup := apiPublicGroup.Group("/users")
 	{
-		userGroup.GET("/:id", r.findUserByID)
-		userGroup.GET("/email/:email", r.findUserByEmail)
+		userPublicGroup.GET("/:id", r.findUserByID)
+		userPublicGroup.GET("/email/:email", r.findUserByEmail)
 	}
 
 	// Private Routes
 
-	apiV1PrivateGroup := apiV1Group.Group("")
-	apiV1PrivateGroup.Use(jwtMiddleware)
-
-	authPrivateGroup := apiV1PrivateGroup.Group("/auth")
+	authPrivateGroup := apiPrivateGroup.Group("/auth")
 	{
 		authPrivateGroup.GET("/me", r.getUser)
 		authPrivateGroup.POST("/logout", r.logout)
