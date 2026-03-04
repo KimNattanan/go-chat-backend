@@ -1,4 +1,4 @@
-package apperror
+package http
 
 import (
 	"errors"
@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func parseGormError(err error) (int, string, bool) {
+func ParseGormError(err error) (int, string, bool) {
 
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):

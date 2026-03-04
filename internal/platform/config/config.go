@@ -2,8 +2,10 @@ package config
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/caarlos0/env/v11"
+	"github.com/joho/godotenv"
 )
 
 type (
@@ -80,7 +82,15 @@ type (
 )
 
 // NewConfig returns app config.
-func NewConfig() (*Config, error) {
+func NewConfig(appEnv string) (*Config, error) {
+	envFile := ".env"
+	if appEnv != "" {
+		envFile = ".env." + appEnv
+	}
+	if err := godotenv.Load(envFile); err != nil {
+		log.Printf("Warning: could not load .env file: %v", err)
+	}
+
 	cfg := &Config{}
 	if err := env.Parse(cfg); err != nil {
 		return nil, fmt.Errorf("config error: %w", err)

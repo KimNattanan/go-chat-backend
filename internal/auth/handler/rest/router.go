@@ -25,5 +25,5 @@ func NewRouter(e *echo.Echo, cfg *config.Config, authUseCase usecase.AuthUseCase
 	// Routers
 	apiPublicGroup := e.Group("/v1")
 	apiPrivateGroup := e.Group("/v1", jwtMiddleware)
-	v1.NewAuthRoutes(apiPublicGroup, apiPrivateGroup, authUseCase, l)
+	v1.NewAuthRoutes(apiPublicGroup, apiPrivateGroup, authUseCase, l, cfg.App.ENV)
 }

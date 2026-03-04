@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	httpAppError "github.com/KimNattanan/go-chat-backend/pkg/apperror/http"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -12,7 +13,7 @@ type ErrorResponse struct {
 	Errors  interface{} `json:"errors,omitempty"`
 }
 
-func Parse(err error) (int, ErrorResponse) {
+func ParseHttp(err error) (int, ErrorResponse) {
 	if err == nil {
 		return http.StatusOK, ErrorResponse{}
 	}
@@ -30,17 +31,17 @@ func Parse(err error) (int, ErrorResponse) {
 	if errors.As(err, &validationErrs) {
 		return http.StatusBadRequest, ErrorResponse{
 			Message: "validation failed",
-			Errors:  parseValidationErrors(validationErrs),
+			Errors:  httpAppError.ParseValidationErrors(validationErrs),
 		}
 	}
 
 	// GORM Errors
-	if code, msg, ok := parseGormError(err); ok {
+	if code, msg, ok := httpAppError.ParseGormError(err); ok {
 		return code, ErrorResponse{Message: msg}
 	}
 
 	// Redis Errors
-	if code, msg, ok := parseRedisError(err); ok {
+	if code, msg, ok := httpAppError.ParseRedisError(err); ok {
 		return code, ErrorResponse{Message: msg}
 	}
 

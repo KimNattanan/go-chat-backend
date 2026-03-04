@@ -1,8 +1,8 @@
-package apperror
+package http
 
 import "github.com/go-playground/validator/v10"
 
-func parseValidationErrors(errs validator.ValidationErrors) map[string]string {
+func ParseValidationErrors(errs validator.ValidationErrors) map[string]string {
 	out := make(map[string]string)
 
 	for _, e := range errs {

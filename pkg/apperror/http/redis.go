@@ -1,4 +1,4 @@
-package apperror
+package http
 
 import (
 	"errors"
@@ -7,7 +7,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func parseRedisError(err error) (int, string, bool) {
+func ParseRedisError(err error) (int, string, bool) {
 	if err == nil {
 		return 0, "", false
 	}

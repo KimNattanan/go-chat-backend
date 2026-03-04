@@ -8,11 +8,12 @@ import (
 )
 
 // NewAuthRoutes -.
-func NewAuthRoutes(apiPublicGroup, apiPrivateGroup *echo.Group, authUseCase usecase.AuthUseCase, l logger.Interface) {
+func NewAuthRoutes(apiPublicGroup, apiPrivateGroup *echo.Group, authUseCase usecase.AuthUseCase, l logger.Interface, appEnv string) {
 	r := &V1{
 		authUseCase: authUseCase,
 		l:           l,
 		v:           validator.New(validator.WithRequiredStructEnabled()),
+		appEnv:      appEnv,
 	}
 
 	// Public Routes

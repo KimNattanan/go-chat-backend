@@ -11,4 +11,5 @@ type V1 struct {
 	authUseCase usecase.AuthUseCase
 	l           logger.Interface
 	v           *validator.Validate
+	appEnv      string
 }

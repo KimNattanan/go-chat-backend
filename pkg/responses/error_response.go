@@ -10,7 +10,7 @@ type Error struct {
 }
 
 func ErrorResponse(c *echo.Context, err error) error {
-	code, errResp := apperror.Parse(err)
+	code, errResp := apperror.ParseHttp(err)
 	return ErrorResponseCustom(c, code, errResp.Message)
 }
 

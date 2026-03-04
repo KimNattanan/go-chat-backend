@@ -26,8 +26,10 @@ import (
 	"github.com/KimNattanan/go-chat-backend/pkg/postgres"
 	"github.com/KimNattanan/go-chat-backend/pkg/redisclient"
 	"github.com/KimNattanan/go-chat-backend/pkg/token"
+	echoMiddleware "github.com/labstack/echo/v5/middleware"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/reflection"
 )
 
 func Run(cfg *config.Config) {
@@ -42,7 +44,7 @@ func Run(cfg *config.Config) {
 	defer pg.Close()
 
 	rdb := redisclient.New(cfg.Redis.Address, cfg.Redis.Password, cfg.Redis.DB)
-	
+
 	// gRPC Client
 	grpcClientConn, err := grpc.NewClient("localhost:"+cfg.GRPC.Port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -70,12 +72,19 @@ func Run(cfg *config.Config) {
 	grpcServer := grpcserver.New(l, grpcserver.Port(cfg.GRPC.Port))
 	authGrpc.NewRouter(grpcServer.App, authUseCase, l)
 	profileGrpc.NewRouter(grpcServer.App, profileUseCase, l)
+	reflection.Register(grpcServer.App)
 
 	// Middleware
 	jwtMiddleware := middleware.JWTMiddleware(l, cfg, jwtMaker, authGrpcClient)
 
 	// HTTP Server
 	httpServer := httpserver.New(l, httpserver.Port(cfg.HTTP.Port))
+	httpServer.Echo.Use(echoMiddleware.CORSWithConfig(echoMiddleware.CORSConfig{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowHeaders:     []string{"Accept", "Content-Type", "Origin", "Authorization"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowCredentials: true,
+	}))
 	httpServer.Echo.Use(middleware.Logger(l))
 	httpServer.Echo.Use(middleware.Recovery(l))
 	authRest.NewRouter(httpServer.Echo, cfg, authUseCase, l, jwtMiddleware)

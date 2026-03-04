@@ -2,6 +2,8 @@ package user
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/KimNattanan/go-chat-backend/internal/auth/entity"
@@ -45,7 +47,7 @@ func (u *UseCase) DeleteUser(ctx context.Context, id string) error {
 	if _, err := u.profileGrpcClient.DeleteProfile(ctx, &profilePb.DeleteProfileRequest{
 		UserId: id,
 	}); err != nil {
-		return err
+		return fmt.Errorf("AuthUseCase - DeleteUser - u.profileGrpcClient.DeleteProfile: %w", err)
 	}
 	return u.userRepo.Delete(ctx, id)
 }
@@ -73,24 +75,24 @@ func (u *UseCase) DeleteSession(ctx context.Context, id string) error {
 func (u *UseCase) Login(ctx context.Context, email, password string) (*entity.User, string, *token.UserClaims, string, *token.UserClaims, error) {
 	user, err := u.userRepo.FindByEmail(ctx, email)
 	if err != nil {
-		return nil, "", nil, "", nil, err
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Login - u.userRepo.FindByEmail: %w", err)
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
-		return nil, "", nil, "", nil, err
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Login - bcrypt.CompareHashAndPassword: %w", err)
 	}
 
 	accessToken, accessClaims, err := u.jwtMaker.CreateToken(user.ID.String(), time.Second*u.accessTTL)
 	if err != nil {
-		return nil, "", nil, "", nil, err
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Login - u.jwtMaker.CreateToken: %w", err)
 	}
 	refreshToken, refreshClaims, err := u.jwtMaker.CreateToken(user.ID.String(), time.Second*u.refreshTTL)
 	if err != nil {
-		return nil, "", nil, "", nil, err
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Login - u.jwtMaker.CreateToken: %w", err)
 	}
 
 	sessionID, err := uuid.Parse(refreshClaims.RegisteredClaims.ID)
 	if err != nil {
-		return nil, "", nil, "", nil, err
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Login - uuid.Parse: %w", err)
 	}
 	session := &entity.Session{
 		ID:        sessionID,
@@ -99,7 +101,7 @@ func (u *UseCase) Login(ctx context.Context, email, password string) (*entity.Us
 		ExpiresAt: refreshClaims.ExpiresAt.Time,
 	}
 	if err := u.sessionRepo.Create(ctx, session); err != nil {
-		return nil, "", nil, "", nil, err
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Login - u.sessionRepo.Create: %w", err)
 	}
 
 	return user, accessToken, accessClaims, refreshToken, refreshClaims, nil
@@ -107,19 +109,22 @@ func (u *UseCase) Login(ctx context.Context, email, password string) (*entity.Us
 
 func (u *UseCase) Register(ctx context.Context, email, password, name string) (*entity.User, string, *token.UserClaims, string, *token.UserClaims, error) {
 	_, err := u.userRepo.FindByEmail(ctx, email)
-	if err != gorm.ErrRecordNotFound {
-		return nil, "", nil, "", nil, err
+	if err == nil {
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Register: email already exists")
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Register - u.userRepo.FindByEmail: %w", err)
 	}
 	hashedPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(password), 12)
 	if err != nil {
-		return nil, "", nil, "", nil, err
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Register - bcrypt.GenerateFromPassword: %w", err)
 	}
 	user := &entity.User{
 		Email:    email,
 		Password: string(hashedPasswordBytes),
 	}
 	if err := u.userRepo.Create(ctx, user); err != nil {
-		return nil, "", nil, "", nil, err
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Register - u.userRepo.Create: %w", err)
 	}
 	if _, err := u.profileGrpcClient.CreateProfile(ctx, &profilePb.CreateProfileRequest{
 		UserId: user.ID.String(),
@@ -127,21 +132,21 @@ func (u *UseCase) Register(ctx context.Context, email, password, name string) (*
 		Name:   name,
 	}); err != nil {
 		u.userRepo.Delete(ctx, user.ID.String())
-		return nil, "", nil, "", nil, err
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Register - u.profileGrpcClient.CreateProfile: %w", err)
 	}
 
 	accessToken, accessClaims, err := u.jwtMaker.CreateToken(user.ID.String(), time.Second*u.accessTTL)
 	if err != nil {
-		return nil, "", nil, "", nil, err
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Register - u.jwtMaker.CreateToken: %w", err)
 	}
 	refreshToken, refreshClaims, err := u.jwtMaker.CreateToken(user.ID.String(), time.Second*u.refreshTTL)
 	if err != nil {
-		return nil, "", nil, "", nil, err
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Register - u.jwtMaker.CreateToken: %w", err)
 	}
 
 	sessionID, err := uuid.Parse(refreshClaims.RegisteredClaims.ID)
 	if err != nil {
-		return nil, "", nil, "", nil, err
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Register - uuid.Parse: %w", err)
 	}
 	session := &entity.Session{
 		ID:        sessionID,
@@ -150,7 +155,7 @@ func (u *UseCase) Register(ctx context.Context, email, password, name string) (*
 		ExpiresAt: refreshClaims.ExpiresAt.Time,
 	}
 	if err := u.sessionRepo.Create(ctx, session); err != nil {
-		return nil, "", nil, "", nil, err
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Register - u.sessionRepo.Create: %w", err)
 	}
 
 	return user, accessToken, accessClaims, refreshToken, refreshClaims, nil
@@ -159,18 +164,21 @@ func (u *UseCase) Register(ctx context.Context, email, password, name string) (*
 func (u *UseCase) Refresh(ctx context.Context, userID, sessionID, newIDStr string, expiresAt time.Time) error {
 	newID, err := uuid.Parse(newIDStr)
 	if err != nil {
-		return err
+		return fmt.Errorf("AuthUseCase - Refresh - uuid.Parse: %w", err)
 	}
 	user, err := u.userRepo.FindByID(ctx, userID)
 	if err != nil {
-		return err
+		return fmt.Errorf("AuthUseCase - Refresh - u.userRepo.FindByID: %w", err)
 	}
 	session, err := u.sessionRepo.FindByID(ctx, sessionID)
 	if err != nil {
-		return err
+		return fmt.Errorf("AuthUseCase - Refresh - u.sessionRepo.FindByID: %w", err)
+	}
+	if session.IsRevoked {
+		return fmt.Errorf("AuthUseCase - Refresh: session is revoked")
 	}
 	if err := u.sessionRepo.Revoke(ctx, sessionID); err != nil {
-		return err
+		return fmt.Errorf("AuthUseCase - Refresh - u.sessionRepo.Revoke: %w", err)
 	}
 	newSession := &entity.Session{
 		ID:        newID,
@@ -180,7 +188,7 @@ func (u *UseCase) Refresh(ctx context.Context, userID, sessionID, newIDStr strin
 		ExpiresAt: expiresAt,
 	}
 	if err := u.sessionRepo.Create(ctx, newSession); err != nil {
-		return err
+		return fmt.Errorf("AuthUseCase - Refresh - u.sessionRepo.Create: %w", err)
 	}
 	return nil
 }

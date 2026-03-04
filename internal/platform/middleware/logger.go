@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/KimNattanan/go-chat-backend/pkg/logger"
@@ -16,8 +15,6 @@ func buildRequestMessage(c *echo.Context) string {
 	result.WriteString(c.Request().Method)
 	result.WriteString(" ")
 	result.WriteString(c.Request().RequestURI)
-	result.WriteString(" - ")
-	result.WriteString(strconv.Itoa(c.Request().Response.StatusCode))
 
 	return result.String()
 }

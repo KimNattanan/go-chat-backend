@@ -24,7 +24,7 @@ func (r *V1) patchProfile(c *echo.Context) error {
 	ctx := c.Request().Context()
 	userID := c.Param("id")
 	var req request.PatchProfileRequest
-	if err := c.Bind(req); err != nil {
+	if err := c.Bind(&req); err != nil {
 		r.l.Error(err, "rest - v1 - patchProfile")
 		return responses.ErrorResponse(c, err)
 	}
