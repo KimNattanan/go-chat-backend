@@ -1,7 +1,7 @@
 services:
   postgres:
-    image: postgres:latest
     container_name: postgres
+    image: postgres:18.3
     environment:
       POSTGRES_DB: db_name
       POSTGRES_USER: db_user
@@ -9,22 +9,38 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql
+
   redis:
-    image: redis:latest
+    image: redis:8.6.1
     ports:
       - "6379:6379"
     command: redis-server --requirepass redis_password
     volumes:
       - redis_data:/data
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:4.2.4-management-alpine
+    tty: true
+    environment:
+      RABBITMQ_DEFAULT_USER: 'guest'
+      RABBITMQ_DEFAULT_PASS: 'guest'
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
   redisinsight:
-    image: redis/redisinsight:latest
+    image: redis/redisinsight:3.2.0
     ports:
       - "5540:5540"
     depends_on:
       - redis
+
   pgadmin:
-    image: dpage/pgadmin4:latest
+    image: dpage/pgadmin4:9.12.0
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@example.com
       PGADMIN_DEFAULT_PASSWORD: adminpassword
@@ -32,6 +48,8 @@ services:
       - "5050:80"
     depends_on:
       - postgres
+
 volumes:
-  postgres-data:
+  postgres_data:
   redis_data:
+  rabbitmq_data:

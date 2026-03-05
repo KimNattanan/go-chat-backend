@@ -30,8 +30,8 @@ func New(userRepo repo.UserRepo, sessionRepo repo.SessionRepo, profileGrpcClient
 		sessionRepo:       sessionRepo,
 		profileGrpcClient: profileGrpcClient,
 		jwtMaker:          jwtMaker,
-		accessTTL:         time.Duration(accessTTL),
-		refreshTTL:        time.Duration(refreshTTL),
+		accessTTL:         time.Duration(accessTTL) * time.Second,
+		refreshTTL:        time.Duration(refreshTTL) * time.Second,
 	}
 }
 
