@@ -24,6 +24,7 @@ import (
 	"github.com/KimNattanan/go-chat-backend/pkg/httpserver"
 	"github.com/KimNattanan/go-chat-backend/pkg/logger"
 	"github.com/KimNattanan/go-chat-backend/pkg/postgres"
+	"github.com/KimNattanan/go-chat-backend/pkg/rabbitmq"
 	"github.com/KimNattanan/go-chat-backend/pkg/redisclient"
 	"github.com/KimNattanan/go-chat-backend/pkg/token"
 	echoMiddleware "github.com/labstack/echo/v5/middleware"
@@ -67,6 +68,12 @@ func Run(cfg *config.Config) {
 	profileUseCase := profileUseCase.New(
 		profilePersistent.NewProfileRepo(pg.DB),
 	)
+
+	// RabbitMQ RPC Server
+	rmqClient := rabbitmq.New(cfg.RMQ.URL, "queue1")
+	if err := rmqClient.Connect(); err != nil {
+		l.Fatal(fmt.Errorf("app - Run - rmqClient.New: %w", err))
+	}
 
 	// gRPC Server
 	grpcServer := grpcserver.New(l, grpcserver.Port(cfg.GRPC.Port))
@@ -116,5 +123,10 @@ func Run(cfg *config.Config) {
 	err = grpcServer.Shutdown()
 	if err != nil {
 		l.Error(fmt.Errorf("app - Run - grpcServer.Shutdown: %w", err))
+	}
+
+	err = rmqClient.Close()
+	if err != nil {
+		l.Error(fmt.Errorf("app - Run - rmqClient.Close: %w", err))
 	}
 }
