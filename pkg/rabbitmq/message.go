@@ -20,3 +20,11 @@ func NewMessage(msgType string, data any) ([]byte, error) {
 
 	return json.Marshal(msg)
 }
+
+func ParseMessage(body []byte) (*Message, error) {
+	var msg Message
+	if err := json.Unmarshal(body, &msg); err != nil {
+		return nil, err
+	}
+	return &msg, nil
+}

@@ -9,6 +9,7 @@ import (
 	"github.com/KimNattanan/go-chat-backend/internal/auth/entity"
 	"github.com/KimNattanan/go-chat-backend/internal/auth/repo"
 	profilePb "github.com/KimNattanan/go-chat-backend/internal/profile/proto/v1"
+	"github.com/KimNattanan/go-chat-backend/pkg/rabbitmq"
 	"github.com/KimNattanan/go-chat-backend/pkg/token"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -19,16 +20,18 @@ type UseCase struct {
 	userRepo          repo.UserRepo
 	sessionRepo       repo.SessionRepo
 	profileGrpcClient profilePb.ProfileServiceClient
+	amqpClient        *rabbitmq.Client
 	jwtMaker          *token.JWTMaker
 	accessTTL         time.Duration
 	refreshTTL        time.Duration
 }
 
-func New(userRepo repo.UserRepo, sessionRepo repo.SessionRepo, profileGrpcClient profilePb.ProfileServiceClient, jwtMaker *token.JWTMaker, accessTTL, refreshTTL int) *UseCase {
+func New(userRepo repo.UserRepo, sessionRepo repo.SessionRepo, profileGrpcClient profilePb.ProfileServiceClient, amqpClient *rabbitmq.Client, jwtMaker *token.JWTMaker, accessTTL, refreshTTL int) *UseCase {
 	return &UseCase{
 		userRepo:          userRepo,
 		sessionRepo:       sessionRepo,
 		profileGrpcClient: profileGrpcClient,
+		amqpClient:        amqpClient,
 		jwtMaker:          jwtMaker,
 		accessTTL:         time.Duration(accessTTL) * time.Second,
 		refreshTTL:        time.Duration(refreshTTL) * time.Second,
@@ -44,10 +47,15 @@ func (u *UseCase) FindUserByEmail(ctx context.Context, email string) (*entity.Us
 }
 
 func (u *UseCase) DeleteUser(ctx context.Context, id string) error {
-	if _, err := u.profileGrpcClient.DeleteProfile(ctx, &profilePb.DeleteProfileRequest{
-		UserId: id,
+	// if _, err := u.profileGrpcClient.DeleteProfile(ctx, &profilePb.DeleteProfileRequest{
+	// 	UserId: id,
+	// }); err != nil {
+	// 	return fmt.Errorf("AuthUseCase - DeleteUser - u.profileGrpcClient.DeleteProfile: %w", err)
+	// }
+	if err := u.amqpClient.Publish("deleteProfile", map[string]string{
+		"user_id": id,
 	}); err != nil {
-		return fmt.Errorf("AuthUseCase - DeleteUser - u.profileGrpcClient.DeleteProfile: %w", err)
+		return fmt.Errorf("AuthUseCase - DeleteUser - u.amqpClient.Publish: %w", err)
 	}
 	return u.userRepo.Delete(ctx, id)
 }
@@ -126,13 +134,22 @@ func (u *UseCase) Register(ctx context.Context, email, password, name string) (*
 	if err := u.userRepo.Create(ctx, user); err != nil {
 		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Register - u.userRepo.Create: %w", err)
 	}
-	if _, err := u.profileGrpcClient.CreateProfile(ctx, &profilePb.CreateProfileRequest{
-		UserId: user.ID.String(),
-		Email:  user.Email,
-		Name:   name,
+
+	// if _, err := u.profileGrpcClient.CreateProfile(ctx, &profilePb.CreateProfileRequest{
+	// 	UserId: user.ID.String(),
+	// 	Email:  user.Email,
+	// 	Name:   name,
+	// }); err != nil {
+	// 	u.userRepo.Delete(ctx, user.ID.String())
+	// 	return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Register - u.profileGrpcClient.CreateProfile: %w", err)
+	// }
+	if err := u.amqpClient.Publish("createProfile", map[string]string{
+		"user_id": user.ID.String(),
+		"email":   user.Email,
+		"name":    name,
 	}); err != nil {
 		u.userRepo.Delete(ctx, user.ID.String())
-		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Register - u.profileGrpcClient.CreateProfile: %w", err)
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Register - u.amqpClient.Publish: %w", err)
 	}
 
 	accessToken, accessClaims, err := u.jwtMaker.CreateToken(user.ID.String(), time.Second*u.accessTTL)

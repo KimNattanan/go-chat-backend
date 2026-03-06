@@ -14,6 +14,7 @@ import (
 	authUseCase "github.com/KimNattanan/go-chat-backend/internal/auth/usecase/auth"
 	"github.com/KimNattanan/go-chat-backend/internal/platform/config"
 	"github.com/KimNattanan/go-chat-backend/internal/platform/middleware"
+	profileAmqpRpc "github.com/KimNattanan/go-chat-backend/internal/profile/handler/amqp_rpc"
 	profileGrpc "github.com/KimNattanan/go-chat-backend/internal/profile/handler/grpc"
 	profileRest "github.com/KimNattanan/go-chat-backend/internal/profile/handler/rest"
 
@@ -56,11 +57,18 @@ func Run(cfg *config.Config) {
 	authGrpcClient := authPb.NewAuthServiceClient(grpcClientConn)
 	profileGrpcClient := profilePb.NewProfileServiceClient(grpcClientConn)
 
+	// RabbitMQ conn
+	rmqClient := rabbitmq.New(cfg.RMQ.URL, "queue1")
+	if err := rmqClient.Connect(); err != nil {
+		l.Fatal(fmt.Errorf("app - Run - rmqClient.New: %w", err))
+	}
+
 	// Use-Case
 	authUseCase := authUseCase.New(
 		authPersistent.NewUserRepo(pg.DB),
 		authPersistent.NewSessionRepo(rdb),
 		profileGrpcClient,
+		rmqClient,
 		jwtMaker,
 		cfg.JWT.AccessTTL,
 		cfg.JWT.RefreshTTL,
@@ -69,11 +77,9 @@ func Run(cfg *config.Config) {
 		profilePersistent.NewProfileRepo(pg.DB),
 	)
 
-	// RabbitMQ RPC Server
-	rmqClient := rabbitmq.New(cfg.RMQ.URL, "queue1")
-	if err := rmqClient.Connect(); err != nil {
-		l.Fatal(fmt.Errorf("app - Run - rmqClient.New: %w", err))
-	}
+	// RabbitMQ Consumer
+	rmqRouter := make(map[string]rabbitmq.Handler)
+	profileAmqpRpc.NewRouter(rmqRouter, profileUseCase, l)
 
 	// gRPC Server
 	grpcServer := grpcserver.New(l, grpcserver.Port(cfg.GRPC.Port))
@@ -98,6 +104,9 @@ func Run(cfg *config.Config) {
 	profileRest.NewRouter(httpServer.Echo, cfg, profileUseCase, l)
 
 	// Start servers
+	if err := rmqClient.Consume(2, rmqRouter); err != nil {
+		l.Error("app - Run - rmqClient.Consume: %w", err)
+	}
 	grpcServer.Start()
 	httpServer.Start()
 
