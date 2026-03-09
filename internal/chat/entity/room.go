@@ -13,7 +13,7 @@ type Room struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 
-	Memberships []Membership `gorm:"foreignKey:RoomID"`
+	Memberships []Membership `gorm:"foreignKey:RoomID;constraint:OnDelete:CASCADE"`
 }
 
 func (r *Room) BeforeCreate(db *gorm.DB) (err error) {

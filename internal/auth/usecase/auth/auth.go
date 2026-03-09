@@ -52,7 +52,7 @@ func (u *UseCase) DeleteUser(ctx context.Context, id string) error {
 	// }); err != nil {
 	// 	return fmt.Errorf("AuthUseCase - DeleteUser - u.profileGrpcClient.DeleteProfile: %w", err)
 	// }
-	if err := u.amqpClient.Publish("deleteProfile", map[string]string{
+	if err := u.amqpClient.Publish("uesr.deleted", map[string]string{
 		"user_id": id,
 	}); err != nil {
 		return fmt.Errorf("AuthUseCase - DeleteUser - u.amqpClient.Publish: %w", err)
@@ -135,15 +135,7 @@ func (u *UseCase) Register(ctx context.Context, email, password, name string) (*
 		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Register - u.userRepo.Create: %w", err)
 	}
 
-	// if _, err := u.profileGrpcClient.CreateProfile(ctx, &profilePb.CreateProfileRequest{
-	// 	UserId: user.ID.String(),
-	// 	Email:  user.Email,
-	// 	Name:   name,
-	// }); err != nil {
-	// 	u.userRepo.Delete(ctx, user.ID.String())
-	// 	return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Register - u.profileGrpcClient.CreateProfile: %w", err)
-	// }
-	if err := u.amqpClient.Publish("createProfile", map[string]string{
+	if err := u.amqpClient.Publish("user.created", map[string]string{
 		"user_id": user.ID.String(),
 		"email":   user.Email,
 		"name":    name,

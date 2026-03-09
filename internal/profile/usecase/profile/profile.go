@@ -2,7 +2,6 @@ package profile
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/KimNattanan/go-chat-backend/internal/profile/entity"
 	"github.com/KimNattanan/go-chat-backend/internal/profile/repo"
@@ -22,15 +21,15 @@ func (u *UseCase) Create(ctx context.Context, profile *entity.Profile) error {
 	return u.profileRepo.Create(ctx, profile)
 }
 
-func (u *UseCase) FindByID(ctx context.Context, userID string) (*entity.Profile, error) {
-	return u.profileRepo.FindByID(ctx, userID)
+func (u *UseCase) FindByUserID(ctx context.Context, userID string) (*entity.Profile, error) {
+	return u.profileRepo.FindByUserID(ctx, userID)
 }
 
 func (u *UseCase) Patch(ctx context.Context, userID string, profile *entity.Profile) (*entity.Profile, error) {
 	if err := u.profileRepo.Patch(ctx, userID, profile); err != nil {
-		return nil, fmt.Errorf("ProfileUseCase - Patch - u.profileRepo.Patch: %w", err)
+		return &entity.Profile{}, err
 	}
-	return u.profileRepo.FindByID(ctx, userID)
+	return u.profileRepo.FindByUserID(ctx, userID)
 }
 
 func (u *UseCase) Delete(ctx context.Context, userID string) error {

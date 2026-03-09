@@ -12,7 +12,7 @@ import (
 func (r *V1) findProfileByID(c *echo.Context) error {
 	ctx := c.Request().Context()
 	userID := c.Param("id")
-	profile, err := r.profileUseCase.FindByID(ctx, userID)
+	profile, err := r.profileUseCase.FindByUserID(ctx, userID)
 	if err != nil {
 		r.l.Error(err, "rest - v1 - findProfileByID")
 		return responses.ErrorResponse(c, err)

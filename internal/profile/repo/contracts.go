@@ -9,7 +9,7 @@ import (
 type (
 	ProfileRepo interface {
 		Create(ctx context.Context, profile *entity.Profile) error
-		FindByID(ctx context.Context, userID string) (*entity.Profile, error)
+		FindByUserID(ctx context.Context, userID string) (*entity.Profile, error)
 		Patch(ctx context.Context, userID string, profile *entity.Profile) error
 		Delete(ctx context.Context, userID string) error
 	}

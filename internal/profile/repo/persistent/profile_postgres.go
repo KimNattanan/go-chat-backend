@@ -22,11 +22,11 @@ func (r *ProfileRepo) Create(ctx context.Context, profile *entity.Profile) error
 	return db.Create(profile).Error
 }
 
-func (r *ProfileRepo) FindByID(ctx context.Context, userID string) (*entity.Profile, error) {
+func (r *ProfileRepo) FindByUserID(ctx context.Context, userID string) (*entity.Profile, error) {
 	db := r.db.WithContext(ctx)
 	var profile entity.Profile
-	if err := db.Where("user_id = ?", userID).First(&profile).Error; err != nil {
-		return nil, err
+	if err := db.First(&profile, "user_id = ?", userID).Error; err != nil {
+		return &entity.Profile{}, err
 	}
 	return &profile, nil
 }
