@@ -60,6 +60,20 @@ func (r *MessageRepo) FindByUserID(ctx context.Context, userID string) ([]*entit
 	return messages, nil
 }
 
+func (r *MessageRepo) FindByRoomIDAndUserID(ctx context.Context, roomID, userID string) ([]*entity.Message, error) {
+	db := r.db.WithContext(ctx)
+	var messageValues []entity.Message
+	if err := db.Where("room_id = ?", roomID).Where("user_id = ?", userID).Find(&messageValues).Error; err != nil {
+		return nil, err
+	}
+
+	messages := make([]*entity.Message, len(messageValues))
+	for i := range messageValues {
+		messages[i] = &messageValues[i]
+	}
+	return messages, nil
+}
+
 func (r *MessageRepo) AnonymizeUserMessages(ctx context.Context, userID string) error {
 	db := r.db.WithContext(ctx)
 	return db.Model(&entity.Message{}).Where("user_id = ?", userID).Update("user_id", uuid.Nil).Error

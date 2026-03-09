@@ -1,9 +1,9 @@
 package rest
 
 import (
+	v1 "github.com/KimNattanan/go-chat-backend/internal/message/handler/rest/v1"
+	"github.com/KimNattanan/go-chat-backend/internal/message/usecase"
 	"github.com/KimNattanan/go-chat-backend/internal/platform/config"
-	v1 "github.com/KimNattanan/go-chat-backend/internal/profile/handler/rest/v1"
-	"github.com/KimNattanan/go-chat-backend/internal/profile/usecase"
 	"github.com/KimNattanan/go-chat-backend/pkg/logger"
 	"github.com/labstack/echo/v5"
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -16,14 +16,13 @@ import (
 // @version     1.0
 // @host        localhost:8080
 // @BasePath    /v1
-func NewRouter(e *echo.Echo, cfg *config.Config, profileUseCase usecase.ProfileUseCase, l logger.Interface, jwtMiddleware echo.MiddlewareFunc) {
+func NewRouter(e *echo.Echo, cfg *config.Config, messageUseCase usecase.MessageUseCase, l logger.Interface, jwtMiddleware echo.MiddlewareFunc) {
 	// Swagger
 	if cfg.Swagger.Enabled {
-		e.GET("/profile/swagger/*", echoSwagger.WrapHandler)
+		e.GET("/message/swagger/*", echoSwagger.WrapHandler)
 	}
 
 	// Routers
-	apiPublicGroup := e.Group("/v1")
 	apiPrivateGroup := e.Group("/v1", jwtMiddleware)
-	v1.NewProfileRoutes(apiPublicGroup, apiPrivateGroup, profileUseCase, l)
+	v1.NewMessageRoutes(apiPrivateGroup, messageUseCase, l)
 }

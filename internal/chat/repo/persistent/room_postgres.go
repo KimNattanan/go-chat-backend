@@ -53,7 +53,9 @@ func (r *RoomRepo) FindByUserID(ctx context.Context, userID string) ([]*entity.R
 
 func (r *RoomRepo) Patch(ctx context.Context, id string, room *entity.Room) error {
 	db := r.db.WithContext(ctx)
-	result := db.Model(&entity.Room{}).Where("id = ?", id).Updates(room)
+	result := db.Model(&entity.Room{}).Where("id = ?", id).Updates(map[string]string{
+		"title": room.Title,
+	})
 	if result.Error != nil {
 		return result.Error
 	}

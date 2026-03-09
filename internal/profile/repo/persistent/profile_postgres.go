@@ -33,7 +33,7 @@ func (r *ProfileRepo) FindByUserID(ctx context.Context, userID string) (*entity.
 
 func (r *ProfileRepo) Patch(ctx context.Context, userID string, profile *entity.Profile) error {
 	db := r.db.WithContext(ctx)
-	result := db.Model(&entity.Profile{}).Where("user_id = ?", userID).Updates(map[string]interface{}{
+	result := db.Model(&entity.Profile{}).Where("user_id = ?", userID).Updates(map[string]string{
 		"name": profile.Name,
 	})
 	if result.Error != nil {

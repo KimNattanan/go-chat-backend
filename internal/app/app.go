@@ -12,15 +12,26 @@ import (
 	authPb "github.com/KimNattanan/go-chat-backend/internal/auth/proto/v1"
 	authPersistent "github.com/KimNattanan/go-chat-backend/internal/auth/repo/persistent"
 	authUseCase "github.com/KimNattanan/go-chat-backend/internal/auth/usecase/auth"
-	"github.com/KimNattanan/go-chat-backend/internal/platform/config"
-	"github.com/KimNattanan/go-chat-backend/internal/platform/middleware"
+
 	profileAmqpRpc "github.com/KimNattanan/go-chat-backend/internal/profile/handler/amqp_rpc"
 	profileGrpc "github.com/KimNattanan/go-chat-backend/internal/profile/handler/grpc"
 	profileRest "github.com/KimNattanan/go-chat-backend/internal/profile/handler/rest"
-
 	profilePb "github.com/KimNattanan/go-chat-backend/internal/profile/proto/v1"
 	profilePersistent "github.com/KimNattanan/go-chat-backend/internal/profile/repo/persistent"
 	profileUseCase "github.com/KimNattanan/go-chat-backend/internal/profile/usecase/profile"
+
+	chatRest "github.com/KimNattanan/go-chat-backend/internal/chat/handler/rest"
+	chatPersistent "github.com/KimNattanan/go-chat-backend/internal/chat/repo/persistent"
+	membershipUseCase "github.com/KimNattanan/go-chat-backend/internal/chat/usecase/membership"
+	roomUseCase "github.com/KimNattanan/go-chat-backend/internal/chat/usecase/room"
+
+	messageRest "github.com/KimNattanan/go-chat-backend/internal/message/handler/rest"
+	messagePersistent "github.com/KimNattanan/go-chat-backend/internal/message/repo/persistent"
+	messageUseCase "github.com/KimNattanan/go-chat-backend/internal/message/usecase/message"
+
+	"github.com/KimNattanan/go-chat-backend/internal/platform/config"
+	"github.com/KimNattanan/go-chat-backend/internal/platform/middleware"
+
 	"github.com/KimNattanan/go-chat-backend/pkg/grpcserver"
 	"github.com/KimNattanan/go-chat-backend/pkg/httpserver"
 	"github.com/KimNattanan/go-chat-backend/pkg/logger"
@@ -73,8 +84,22 @@ func Run(cfg *config.Config) {
 		cfg.JWT.AccessTTL,
 		cfg.JWT.RefreshTTL,
 	)
+
 	profileUseCase := profileUseCase.New(
 		profilePersistent.NewProfileRepo(pg.DB),
+	)
+
+	roomUseCase := roomUseCase.New(
+		chatPersistent.NewRoomRepo(pg.DB),
+		rmqClient,
+	)
+	membershipUseCase := membershipUseCase.New(
+		chatPersistent.NewMembershipRepo(pg.DB),
+		authGrpcClient,
+	)
+
+	messageUseCase := messageUseCase.New(
+		messagePersistent.NewMessageRepo(pg.DB),
 	)
 
 	// RabbitMQ Consumer
@@ -101,7 +126,9 @@ func Run(cfg *config.Config) {
 	httpServer.Echo.Use(middleware.Logger(l))
 	httpServer.Echo.Use(middleware.Recovery(l))
 	authRest.NewRouter(httpServer.Echo, cfg, authUseCase, l, jwtMiddleware)
-	profileRest.NewRouter(httpServer.Echo, cfg, profileUseCase, l)
+	profileRest.NewRouter(httpServer.Echo, cfg, profileUseCase, l, jwtMiddleware)
+	chatRest.NewRouter(httpServer.Echo, cfg, roomUseCase, membershipUseCase, l, jwtMiddleware)
+	messageRest.NewRouter(httpServer.Echo, cfg, messageUseCase, l, jwtMiddleware)
 
 	// Start servers
 	if err := rmqClient.Consume(2, rmqRouter); err != nil {

@@ -8,7 +8,7 @@ import (
 )
 
 // NewProfileRoutes -.
-func NewProfileRoutes(apiPublicGroup *echo.Group, profileUseCase usecase.ProfileUseCase, l logger.Interface) {
+func NewProfileRoutes(apiPublicGroup *echo.Group, apiPrivateGroup *echo.Group, profileUseCase usecase.ProfileUseCase, l logger.Interface) {
 	r := &V1{
 		profileUseCase: profileUseCase,
 		l:              l,
@@ -19,8 +19,17 @@ func NewProfileRoutes(apiPublicGroup *echo.Group, profileUseCase usecase.Profile
 
 	profilePublicGroup := apiPublicGroup.Group("/profiles")
 	{
-		profilePublicGroup.GET("/:id", r.findProfileByID)
-		profilePublicGroup.PATCH("/:id", r.patchProfile)
+		profilePublicGroup.GET("/:userID", r.findProfile)
+	}
+
+	// Private Routes
+
+	profilePrivateGroup := apiPublicGroup.Group("/profiles/me")
+	{
+		profilePrivateGroup.POST("", r.createProfile)
+		profilePublicGroup.GET("", r.getProfile)
+		profilePrivateGroup.PATCH("", r.patchProfile)
+		profilePrivateGroup.DELETE("", r.deleteProfile)
 	}
 
 }

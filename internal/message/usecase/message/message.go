@@ -33,6 +33,10 @@ func (u *UseCase) FindByUserID(ctx context.Context, userID string) ([]*entity.Me
 	return u.messageRepo.FindByUserID(ctx, userID)
 }
 
+func (u *UseCase) FindByRoomIDAndUserID(ctx context.Context, roomID, userID string) ([]*entity.Message, error) {
+	return u.messageRepo.FindByRoomIDAndUserID(ctx, roomID, userID)
+}
+
 func (u *UseCase) AnonymizeUserMessages(ctx context.Context, userID string) error {
 	return u.messageRepo.AnonymizeUserMessages(ctx, userID)
 }
