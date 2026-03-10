@@ -416,7 +416,7 @@ func (x *MembershipResponse) GetMembership() *Membership {
 
 type MembershipsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Membership    []*Membership          `protobuf:"bytes,1,rep,name=Membership,proto3" json:"Membership,omitempty"`
+	Memberships   []*Membership          `protobuf:"bytes,1,rep,name=Memberships,proto3" json:"Memberships,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -451,9 +451,9 @@ func (*MembershipsResponse) Descriptor() ([]byte, []int) {
 	return file_internal_chat_proto_v1_membership_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *MembershipsResponse) GetMembership() []*Membership {
+func (x *MembershipsResponse) GetMemberships() []*Membership {
 	if x != nil {
-		return x.Membership
+		return x.Memberships
 	}
 	return nil
 }
@@ -531,11 +531,9 @@ const file_internal_chat_proto_v1_membership_proto_rawDesc = "" +
 	"\x12MembershipResponse\x123\n" +
 	"\n" +
 	"Membership\x18\x01 \x01(\v2\x13.chat.v1.MembershipR\n" +
-	"Membership\"J\n" +
-	"\x13MembershipsResponse\x123\n" +
-	"\n" +
-	"Membership\x18\x01 \x03(\v2\x13.chat.v1.MembershipR\n" +
-	"Membership\"4\n" +
+	"Membership\"L\n" +
+	"\x13MembershipsResponse\x125\n" +
+	"\vMemberships\x18\x01 \x03(\v2\x13.chat.v1.MembershipR\vMemberships\"4\n" +
 	"\x18DeleteMembershipResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage2\x81\x05\n" +
 	"\x11MembershipService\x12`\n" +
@@ -575,7 +573,7 @@ var file_internal_chat_proto_v1_membership_proto_goTypes = []any{
 var file_internal_chat_proto_v1_membership_proto_depIdxs = []int32{
 	10, // 0: chat.v1.Membership.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 1: chat.v1.MembershipResponse.Membership:type_name -> chat.v1.Membership
-	0,  // 2: chat.v1.MembershipsResponse.Membership:type_name -> chat.v1.Membership
+	0,  // 2: chat.v1.MembershipsResponse.Memberships:type_name -> chat.v1.Membership
 	1,  // 3: chat.v1.MembershipService.FindMembershipsByRoomID:input_type -> chat.v1.FindMembershipsByRoomIDRequest
 	2,  // 4: chat.v1.MembershipService.FindMembershipsByUserID:input_type -> chat.v1.FindMembershipsByUserIDRequest
 	3,  // 5: chat.v1.MembershipService.FindMembershipByRoomIDAndUserID:input_type -> chat.v1.FindMembershipByRoomIDAndUserIDRequest

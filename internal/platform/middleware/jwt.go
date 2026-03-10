@@ -47,27 +47,9 @@ func JWTMiddleware(l logger.Interface, cfg *config.Config, jwtMaker *token.JWTMa
 				return responses.ErrorResponseCustom(c, http.StatusUnauthorized, "unauthorized")
 			}
 
-			// newAccessToken, newAccessClaims, err := jwtMaker.CreateToken(refreshClaims.ID, time.Second*time.Duration(cfg.JWT.AccessTTL))
-			// if err != nil {
-			// 	l.Error(err, "JWTMiddleware")
-			// 	return responses.ErrorResponseCustom(c, http.StatusInternalServerError, "failed to create token")
-			// }
-			// newRefreshToken, newRefreshClaims, err := jwtMaker.CreateToken(refreshClaims.ID, time.Second*time.Duration(cfg.JWT.RefreshTTL))
-			// if err != nil {
-			// 	l.Error(err, "JWTMiddleware")
-			// 	return responses.ErrorResponseCustom(c, http.StatusInternalServerError, "failed to create token")
-			// }
-
-			// grpc ->
-			// 	 u := FindUserByID(UserID)
-			//   s := FindSessionByID(SessionID)
-			//   RevokeSession(SessionID)
-			//   CreateSession(NewSessionID, u.ID, s.CreatedAt, ExpiresAt)
 			resp, err := authGrpcClient.RefreshToken(c.Request().Context(), &authPb.RefreshTokenRequest{
 				UserId:    refreshClaims.ID,
 				SessionId: refreshClaims.RegisteredClaims.ID,
-				// NewSessionId: newRefreshClaims.RegisteredClaims.ID,
-				// ExpiresAt:    timestamppb.New(newRefreshClaims.RegisteredClaims.ExpiresAt.Time),
 			})
 			if err != nil {
 				l.Error(err, "JWTMiddleware")

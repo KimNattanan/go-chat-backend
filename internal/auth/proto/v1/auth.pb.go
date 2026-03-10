@@ -404,7 +404,7 @@ func (x *RegisterRequest) GetProfile() *Profile {
 
 type LogoutRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	RefreshToken  string                 `protobuf:"bytes,1,opt,name=refreshToken,proto3" json:"refreshToken,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -439,9 +439,9 @@ func (*LogoutRequest) Descriptor() ([]byte, []int) {
 	return file_internal_auth_proto_v1_auth_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *LogoutRequest) GetSessionId() string {
+func (x *LogoutRequest) GetRefreshToken() string {
 	if x != nil {
-		return x.SessionId
+		return x.RefreshToken
 	}
 	return ""
 }
@@ -867,10 +867,9 @@ const file_internal_auth_proto_v1_auth_proto_rawDesc = "" +
 	"\x0fRegisterRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\x12*\n" +
-	"\aprofile\x18\x03 \x01(\v2\x10.auth.v1.ProfileR\aprofile\".\n" +
-	"\rLogoutRequest\x12\x1d\n" +
-	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\"M\n" +
+	"\aprofile\x18\x03 \x01(\v2\x10.auth.v1.ProfileR\aprofile\"3\n" +
+	"\rLogoutRequest\x12\"\n" +
+	"\frefreshToken\x18\x01 \x01(\tR\frefreshToken\"M\n" +
 	"\x13RefreshTokenRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1d\n" +
 	"\n" +

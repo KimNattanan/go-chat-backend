@@ -16,15 +16,16 @@ import (
 	profileAmqpRpc "github.com/KimNattanan/go-chat-backend/internal/profile/handler/amqp_rpc"
 	profileGrpc "github.com/KimNattanan/go-chat-backend/internal/profile/handler/grpc"
 	profileRest "github.com/KimNattanan/go-chat-backend/internal/profile/handler/rest"
-	profilePb "github.com/KimNattanan/go-chat-backend/internal/profile/proto/v1"
 	profilePersistent "github.com/KimNattanan/go-chat-backend/internal/profile/repo/persistent"
 	profileUseCase "github.com/KimNattanan/go-chat-backend/internal/profile/usecase/profile"
 
+	chatGrpc "github.com/KimNattanan/go-chat-backend/internal/chat/handler/grpc"
 	chatRest "github.com/KimNattanan/go-chat-backend/internal/chat/handler/rest"
 	chatPersistent "github.com/KimNattanan/go-chat-backend/internal/chat/repo/persistent"
 	membershipUseCase "github.com/KimNattanan/go-chat-backend/internal/chat/usecase/membership"
 	roomUseCase "github.com/KimNattanan/go-chat-backend/internal/chat/usecase/room"
 
+	messageGrpc "github.com/KimNattanan/go-chat-backend/internal/message/handler/grpc"
 	messageRest "github.com/KimNattanan/go-chat-backend/internal/message/handler/rest"
 	messagePersistent "github.com/KimNattanan/go-chat-backend/internal/message/repo/persistent"
 	messageUseCase "github.com/KimNattanan/go-chat-backend/internal/message/usecase/message"
@@ -66,7 +67,6 @@ func Run(cfg *config.Config) {
 	defer grpcClientConn.Close()
 
 	authGrpcClient := authPb.NewAuthServiceClient(grpcClientConn)
-	profileGrpcClient := profilePb.NewProfileServiceClient(grpcClientConn)
 
 	// RabbitMQ conn
 	rmqClient := rabbitmq.New(cfg.RMQ.URL, "queue1")
@@ -78,7 +78,6 @@ func Run(cfg *config.Config) {
 	authUseCase := authUseCase.New(
 		authPersistent.NewUserRepo(pg.DB),
 		authPersistent.NewSessionRepo(rdb),
-		profileGrpcClient,
 		rmqClient,
 		jwtMaker,
 		cfg.JWT.AccessTTL,
@@ -110,6 +109,8 @@ func Run(cfg *config.Config) {
 	grpcServer := grpcserver.New(l, grpcserver.Port(cfg.GRPC.Port))
 	authGrpc.NewRouter(grpcServer.App, authUseCase, l)
 	profileGrpc.NewRouter(grpcServer.App, profileUseCase, l)
+	chatGrpc.NewRouter(grpcServer.App, roomUseCase, membershipUseCase, l)
+	messageGrpc.NewRouter(grpcServer.App, messageUseCase, l)
 	reflection.Register(grpcServer.App)
 
 	// Middleware

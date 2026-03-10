@@ -28,7 +28,7 @@ type Room struct {
 	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	Memberships   []*Membership          `protobuf:"bytes,5,rep,name=memberships,proto3" json:"memberships,omitempty"`
+	Memberships   []*RoomMembership      `protobuf:"bytes,5,rep,name=memberships,proto3" json:"memberships,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -91,14 +91,14 @@ func (x *Room) GetUpdatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *Room) GetMemberships() []*Membership {
+func (x *Room) GetMemberships() []*RoomMembership {
 	if x != nil {
 		return x.Memberships
 	}
 	return nil
 }
 
-type Membership struct {
+type RoomMembership struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
@@ -106,20 +106,20 @@ type Membership struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Membership) Reset() {
-	*x = Membership{}
+func (x *RoomMembership) Reset() {
+	*x = RoomMembership{}
 	mi := &file_internal_chat_proto_v1_room_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Membership) String() string {
+func (x *RoomMembership) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Membership) ProtoMessage() {}
+func (*RoomMembership) ProtoMessage() {}
 
-func (x *Membership) ProtoReflect() protoreflect.Message {
+func (x *RoomMembership) ProtoReflect() protoreflect.Message {
 	mi := &file_internal_chat_proto_v1_room_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -131,19 +131,19 @@ func (x *Membership) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Membership.ProtoReflect.Descriptor instead.
-func (*Membership) Descriptor() ([]byte, []int) {
+// Deprecated: Use RoomMembership.ProtoReflect.Descriptor instead.
+func (*RoomMembership) Descriptor() ([]byte, []int) {
 	return file_internal_chat_proto_v1_room_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *Membership) GetUserId() string {
+func (x *RoomMembership) GetUserId() string {
 	if x != nil {
 		return x.UserId
 	}
 	return ""
 }
 
-func (x *Membership) GetCreatedAt() *timestamppb.Timestamp {
+func (x *RoomMembership) GetCreatedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.CreatedAt
 	}
@@ -284,7 +284,8 @@ func (x *CreateRoomRequest) GetTitle() string {
 
 type PatchRoomRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -317,6 +318,13 @@ func (x *PatchRoomRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use PatchRoomRequest.ProtoReflect.Descriptor instead.
 func (*PatchRoomRequest) Descriptor() ([]byte, []int) {
 	return file_internal_chat_proto_v1_room_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *PatchRoomRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
 }
 
 func (x *PatchRoomRequest) GetTitle() string {
@@ -506,17 +514,16 @@ var File_internal_chat_proto_v1_room_proto protoreflect.FileDescriptor
 
 const file_internal_chat_proto_v1_room_proto_rawDesc = "" +
 	"\n" +
-	"!internal/chat/proto/v1/room.proto\x12\achat.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd9\x01\n" +
+	"!internal/chat/proto/v1/room.proto\x12\achat.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xdd\x01\n" +
 	"\x04Room\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x129\n" +
 	"\n" +
 	"created_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x125\n" +
-	"\vmemberships\x18\x05 \x03(\v2\x13.chat.v1.MembershipR\vmemberships\"`\n" +
-	"\n" +
-	"Membership\x12\x17\n" +
+	"updated_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x129\n" +
+	"\vmemberships\x18\x05 \x03(\v2\x17.chat.v1.RoomMembershipR\vmemberships\"d\n" +
+	"\x0eRoomMembership\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x129\n" +
 	"\n" +
 	"created_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"%\n" +
@@ -525,9 +532,10 @@ const file_internal_chat_proto_v1_room_proto_rawDesc = "" +
 	"\x18FindRoomsByUserIDRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\")\n" +
 	"\x11CreateRoomRequest\x12\x14\n" +
-	"\x05title\x18\x01 \x01(\tR\x05title\"(\n" +
-	"\x10PatchRoomRequest\x12\x14\n" +
-	"\x05title\x18\x01 \x01(\tR\x05title\"#\n" +
+	"\x05title\x18\x01 \x01(\tR\x05title\"8\n" +
+	"\x10PatchRoomRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\"#\n" +
 	"\x11DeleteRoomRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"1\n" +
 	"\fRoomResponse\x12!\n" +
@@ -560,7 +568,7 @@ func file_internal_chat_proto_v1_room_proto_rawDescGZIP() []byte {
 var file_internal_chat_proto_v1_room_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_internal_chat_proto_v1_room_proto_goTypes = []any{
 	(*Room)(nil),                     // 0: chat.v1.Room
-	(*Membership)(nil),               // 1: chat.v1.Membership
+	(*RoomMembership)(nil),           // 1: chat.v1.RoomMembership
 	(*FindRoomByIDRequest)(nil),      // 2: chat.v1.FindRoomByIDRequest
 	(*FindRoomsByUserIDRequest)(nil), // 3: chat.v1.FindRoomsByUserIDRequest
 	(*CreateRoomRequest)(nil),        // 4: chat.v1.CreateRoomRequest
@@ -574,8 +582,8 @@ var file_internal_chat_proto_v1_room_proto_goTypes = []any{
 var file_internal_chat_proto_v1_room_proto_depIdxs = []int32{
 	10, // 0: chat.v1.Room.created_at:type_name -> google.protobuf.Timestamp
 	10, // 1: chat.v1.Room.updated_at:type_name -> google.protobuf.Timestamp
-	1,  // 2: chat.v1.Room.memberships:type_name -> chat.v1.Membership
-	10, // 3: chat.v1.Membership.created_at:type_name -> google.protobuf.Timestamp
+	1,  // 2: chat.v1.Room.memberships:type_name -> chat.v1.RoomMembership
+	10, // 3: chat.v1.RoomMembership.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 4: chat.v1.RoomResponse.room:type_name -> chat.v1.Room
 	0,  // 5: chat.v1.RoomsResponse.rooms:type_name -> chat.v1.Room
 	2,  // 6: chat.v1.RoomService.FindRoomByID:input_type -> chat.v1.FindRoomByIDRequest

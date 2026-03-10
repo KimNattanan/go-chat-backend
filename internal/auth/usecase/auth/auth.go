@@ -8,7 +8,6 @@ import (
 
 	"github.com/KimNattanan/go-chat-backend/internal/auth/entity"
 	"github.com/KimNattanan/go-chat-backend/internal/auth/repo"
-	profilePb "github.com/KimNattanan/go-chat-backend/internal/profile/proto/v1"
 	"github.com/KimNattanan/go-chat-backend/pkg/rabbitmq"
 	"github.com/KimNattanan/go-chat-backend/pkg/token"
 	"github.com/google/uuid"
@@ -17,24 +16,22 @@ import (
 )
 
 type UseCase struct {
-	userRepo          repo.UserRepo
-	sessionRepo       repo.SessionRepo
-	profileGrpcClient profilePb.ProfileServiceClient
-	amqpClient        *rabbitmq.Client
-	jwtMaker          *token.JWTMaker
-	accessTTL         time.Duration
-	refreshTTL        time.Duration
+	userRepo    repo.UserRepo
+	sessionRepo repo.SessionRepo
+	amqpClient  *rabbitmq.Client
+	jwtMaker    *token.JWTMaker
+	accessTTL   time.Duration
+	refreshTTL  time.Duration
 }
 
-func New(userRepo repo.UserRepo, sessionRepo repo.SessionRepo, profileGrpcClient profilePb.ProfileServiceClient, amqpClient *rabbitmq.Client, jwtMaker *token.JWTMaker, accessTTL, refreshTTL int) *UseCase {
+func New(userRepo repo.UserRepo, sessionRepo repo.SessionRepo, amqpClient *rabbitmq.Client, jwtMaker *token.JWTMaker, accessTTL, refreshTTL int) *UseCase {
 	return &UseCase{
-		userRepo:          userRepo,
-		sessionRepo:       sessionRepo,
-		profileGrpcClient: profileGrpcClient,
-		amqpClient:        amqpClient,
-		jwtMaker:          jwtMaker,
-		accessTTL:         time.Duration(accessTTL) * time.Second,
-		refreshTTL:        time.Duration(refreshTTL) * time.Second,
+		userRepo:    userRepo,
+		sessionRepo: sessionRepo,
+		amqpClient:  amqpClient,
+		jwtMaker:    jwtMaker,
+		accessTTL:   time.Duration(accessTTL) * time.Second,
+		refreshTTL:  time.Duration(refreshTTL) * time.Second,
 	}
 }
 
@@ -47,11 +44,6 @@ func (u *UseCase) FindUserByEmail(ctx context.Context, email string) (*entity.Us
 }
 
 func (u *UseCase) DeleteUser(ctx context.Context, id string) error {
-	// if _, err := u.profileGrpcClient.DeleteProfile(ctx, &profilePb.DeleteProfileRequest{
-	// 	UserId: id,
-	// }); err != nil {
-	// 	return fmt.Errorf("AuthUseCase - DeleteUser - u.profileGrpcClient.DeleteProfile: %w", err)
-	// }
 	if err := u.amqpClient.Publish("uesr.deleted", map[string]string{
 		"user_id": id,
 	}); err != nil {
@@ -170,34 +162,64 @@ func (u *UseCase) Register(ctx context.Context, email, password, name string) (*
 	return user, accessToken, accessClaims, refreshToken, refreshClaims, nil
 }
 
-func (u *UseCase) Refresh(ctx context.Context, userID, sessionID, newIDStr string, expiresAt time.Time) error {
-	newID, err := uuid.Parse(newIDStr)
+func (u *UseCase) Logout(ctx context.Context, refreshToken string) error {
+	refreshClaims, err := u.jwtMaker.VerfiyToken(refreshToken)
 	if err != nil {
-		return fmt.Errorf("AuthUseCase - Refresh - uuid.Parse: %w", err)
+		return fmt.Errorf("AuthUseCase - Logout - u.jwtMaker.VerfiyToken: %w", err)
+	}
+	if err := u.sessionRepo.Revoke(ctx, refreshClaims.RegisteredClaims.ID); err != nil {
+		return fmt.Errorf("AuthUseCase - Logout - u.sessionRepo.Revoke: %w", err)
+	}
+	return nil
+}
+
+func (u *UseCase) RefreshTokenBySessionID(ctx context.Context, userID, oldSessionID string) (*entity.User, string, *token.UserClaims, string, *token.UserClaims, error) {
+	session, err := u.sessionRepo.FindByID(ctx, oldSessionID)
+	if err != nil {
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - RefreshTokenBySessionID - u.sessionRepo.FindByID: %w", err)
+	}
+	if session.IsRevoked {
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - RefreshTokenBySessionID: session is revoked")
+	}
+	if err := u.sessionRepo.Revoke(ctx, oldSessionID); err != nil {
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - RefreshTokenBySessionID - u.sessionRepo.Revoke: %w", err)
 	}
 	user, err := u.userRepo.FindByID(ctx, userID)
 	if err != nil {
-		return fmt.Errorf("AuthUseCase - Refresh - u.userRepo.FindByID: %w", err)
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - RefreshTokenBySessionID - u.userRepo.FindByID: %w", err)
 	}
-	session, err := u.sessionRepo.FindByID(ctx, sessionID)
+
+	accessToken, accessClaims, err := u.jwtMaker.CreateToken(user.ID.String(), time.Second*u.accessTTL)
 	if err != nil {
-		return fmt.Errorf("AuthUseCase - Refresh - u.sessionRepo.FindByID: %w", err)
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - RefreshTokenBySessionID - u.jwtMaker.CreateToken: %w", err)
 	}
-	if session.IsRevoked {
-		return fmt.Errorf("AuthUseCase - Refresh: session is revoked")
+	refreshToken, refreshClaims, err := u.jwtMaker.CreateToken(user.ID.String(), time.Second*u.refreshTTL)
+	if err != nil {
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - RefreshTokenBySessionID - u.jwtMaker.CreateToken: %w", err)
 	}
-	if err := u.sessionRepo.Revoke(ctx, sessionID); err != nil {
-		return fmt.Errorf("AuthUseCase - Refresh - u.sessionRepo.Revoke: %w", err)
+
+	newSessionID, err := uuid.Parse(refreshClaims.RegisteredClaims.ID)
+	if err != nil {
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - RefreshTokenBySessionID - uuid.Parse: %w", err)
 	}
 	newSession := &entity.Session{
-		ID:        newID,
+		ID:        newSessionID,
 		UserID:    user.ID,
 		IsRevoked: false,
 		CreatedAt: session.CreatedAt,
-		ExpiresAt: expiresAt,
+		ExpiresAt: refreshClaims.ExpiresAt.Time,
 	}
 	if err := u.sessionRepo.Create(ctx, newSession); err != nil {
-		return fmt.Errorf("AuthUseCase - Refresh - u.sessionRepo.Create: %w", err)
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - RefreshTokenBySessionID - u.sessionRepo.Create: %w", err)
 	}
-	return nil
+
+	return user, accessToken, accessClaims, refreshToken, refreshClaims, nil
+}
+
+func (u *UseCase) RefreshToken(ctx context.Context, userID, oldRefreshToken string) (*entity.User, string, *token.UserClaims, string, *token.UserClaims, error) {
+	oldRefreshClaims, err := u.jwtMaker.VerfiyToken(oldRefreshToken)
+	if err != nil {
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - RefreshToken - u.jwtMaker.VerfiyToken: %w", err)
+	}
+	return u.RefreshTokenBySessionID(ctx, userID, oldRefreshClaims.RegisteredClaims.ID)
 }

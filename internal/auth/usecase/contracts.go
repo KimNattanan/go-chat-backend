@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"time"
 
 	"github.com/KimNattanan/go-chat-backend/internal/auth/entity"
 	"github.com/KimNattanan/go-chat-backend/pkg/token"
@@ -22,6 +21,8 @@ type (
 
 		Login(ctx context.Context, email, password string) (*entity.User, string, *token.UserClaims, string, *token.UserClaims, error)
 		Register(ctx context.Context, email, password, name string) (*entity.User, string, *token.UserClaims, string, *token.UserClaims, error)
-		Refresh(ctx context.Context, userID, sessionID, newID string, expiresAt time.Time) error
+		Logout(ctx context.Context, refreshToken string) error
+		RefreshToken(ctx context.Context, userID, oldRefreshToken string) (*entity.User, string, *token.UserClaims, string, *token.UserClaims, error)
+		RefreshTokenBySessionID(ctx context.Context, userID, oldSessionID string) (*entity.User, string, *token.UserClaims, string, *token.UserClaims, error)
 	}
 )

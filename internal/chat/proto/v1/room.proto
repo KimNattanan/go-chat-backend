@@ -14,10 +14,10 @@ message Room {
   google.protobuf.Timestamp created_at = 3;
   google.protobuf.Timestamp updated_at = 4;
 
-  repeated Membership memberships = 5;
+  repeated RoomMembership memberships = 5;
 }
 
-message Membership {
+message RoomMembership {
   string user_id = 1;
   google.protobuf.Timestamp created_at = 2;
 }
@@ -28,15 +28,20 @@ message Membership {
 message FindRoomByIDRequest {
   string id = 1;
 }
+
 message FindRoomsByUserIDRequest {
   string user_id = 1;
 }
+
 message CreateRoomRequest {
   string title = 1;
 }
+
 message PatchRoomRequest {
-  string title = 1;
+  string id = 1;
+  string title = 2;
 }
+
 message DeleteRoomRequest {
   string id = 1;
 }

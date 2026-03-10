@@ -48,7 +48,7 @@ message RegisterRequest {
 }
 
 message LogoutRequest {
-  string session_id = 1;
+  string refreshToken = 1;
 }
 
 message RefreshTokenRequest {

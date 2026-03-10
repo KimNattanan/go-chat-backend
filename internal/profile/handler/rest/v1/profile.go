@@ -86,13 +86,13 @@ func (r *V1) patchProfile(c *echo.Context) error {
 	profile := &entity.Profile{
 		Name: req.Name,
 	}
-	profile, err := r.profileUseCase.Patch(ctx, userID, profile)
+	updatedProfile, err := r.profileUseCase.Patch(ctx, userID, profile)
 	if err != nil {
 		r.l.Error(err, "rest - v1 - patchProfile")
 		return responses.ErrorResponse(c, err)
 	}
 
-	return c.JSON(http.StatusOK, profile)
+	return c.JSON(http.StatusOK, toProfileResponse(updatedProfile))
 }
 
 func (r *V1) deleteProfile(c *echo.Context) error {

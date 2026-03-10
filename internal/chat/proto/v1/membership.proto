@@ -50,7 +50,7 @@ message MembershipResponse {
 }
 
 message MembershipsResponse {
-  repeated Membership Membership = 1;
+  repeated Membership Memberships = 1;
 }
 
 message DeleteMembershipResponse {

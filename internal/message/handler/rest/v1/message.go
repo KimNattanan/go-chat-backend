@@ -136,5 +136,5 @@ func (r *V1) anonymizeUserMessages(c *echo.Context) error {
 		return responses.ErrorResponse(c, err)
 	}
 
-	return responses.MessageResponse(c, http.StatusOK, "messages anonyized")
+	return responses.MessageResponse(c, http.StatusOK, "messages anonymized")
 }

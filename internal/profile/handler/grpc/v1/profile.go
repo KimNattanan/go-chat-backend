@@ -9,11 +9,23 @@ import (
 	"github.com/google/uuid"
 )
 
+func (r *V1) FindProfile(ctx context.Context, req *v1.FindProfileRequest) (*v1.ProfileResponse, error) {
+	profile, err := r.profileUseCase.FindByUserID(ctx, req.UserId)
+	if err != nil {
+		return nil, apperror.ParseGrpc(err)
+	}
+
+	return &v1.ProfileResponse{
+		Profile: toProtoProfile(profile),
+	}, nil
+}
+
 func (r *V1) CreateProfile(ctx context.Context, req *v1.CreateProfileRequest) (*v1.ProfileResponse, error) {
 	userID, err := uuid.Parse(req.UserId)
 	if err != nil {
 		return nil, apperror.ParseGrpc(err)
 	}
+
 	profile := &entity.Profile{
 		UserID: userID,
 		Email:  req.Email,
@@ -22,8 +34,23 @@ func (r *V1) CreateProfile(ctx context.Context, req *v1.CreateProfileRequest) (*
 	if err := r.profileUseCase.Create(ctx, profile); err != nil {
 		return nil, apperror.ParseGrpc(err)
 	}
+
 	return &v1.ProfileResponse{
 		Profile: toProtoProfile(profile),
+	}, nil
+}
+
+func (r *V1) PatchProfile(ctx context.Context, req *v1.PatchProfileRequest) (*v1.ProfileResponse, error) {
+	profile := &entity.Profile{
+		Name: req.Name,
+	}
+	updatedProfile, err := r.profileUseCase.Patch(ctx, req.UserId, profile)
+	if err != nil {
+		return nil, apperror.ParseGrpc(err)
+	}
+
+	return &v1.ProfileResponse{
+		Profile: toProtoProfile(updatedProfile),
 	}, nil
 }
 
@@ -31,6 +58,7 @@ func (r *V1) DeleteProfile(ctx context.Context, req *v1.DeleteProfileRequest) (*
 	if err := r.profileUseCase.Delete(ctx, req.UserId); err != nil {
 		return nil, apperror.ParseGrpc(err)
 	}
+
 	return &v1.DeleteProfileResponse{
 		Message: "profile deleted",
 	}, nil
