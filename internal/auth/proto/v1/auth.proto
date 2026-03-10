@@ -15,6 +15,17 @@ message User {
   google.protobuf.Timestamp updated_at = 4;
 }
 
+message Profile {
+  string name = 1;
+}
+
+message Tokens {
+  string access_token = 2;
+  google.protobuf.Timestamp access_token_expires_at = 3;
+  string refresh_token = 4;
+  google.protobuf.Timestamp refresh_token_expires_at = 5;
+}
+
 // Requests
 
 message FindUserByIDRequest {
@@ -25,11 +36,28 @@ message FindUserByEmailRequest {
   string email = 1;
 }
 
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+  Profile profile = 3;
+}
+
+message LogoutRequest {
+  string session_id = 1;
+}
+
 message RefreshTokenRequest {
   string user_id = 1;
   string session_id = 2;
-  string new_session_id = 3;
-  google.protobuf.Timestamp expires_at = 4;
+}
+
+message DeleteUserRequest {
+  string id = 1;
 }
 
 // Responses
@@ -38,9 +66,28 @@ message UserResponse {
   User user = 1;
 }
 
+message LoginResponse {
+  string user_id = 1;
+  Tokens tokens = 2;
+}
+
+message RegisterResponse {
+  string user_id = 1;
+  Tokens tokens = 2;
+  Profile profile = 3;
+}
+
+message LogoutResponse {
+  string message = 1;
+}
+
 message RefreshTokenResponse {
   string user_id = 1;
-  string new_session_id = 2;
+  Tokens tokens = 2;
+}
+
+message DeleteUserResponse {
+  string message = 1;
 }
 
 // Services
@@ -48,5 +95,9 @@ message RefreshTokenResponse {
 service AuthService {
   rpc FindUserByID(FindUserByIDRequest) returns (UserResponse);
   rpc FindUserByEmail(FindUserByEmailRequest) returns (UserResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
 }

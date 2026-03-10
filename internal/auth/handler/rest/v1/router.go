@@ -36,5 +36,7 @@ func NewAuthRoutes(apiPublicGroup, apiPrivateGroup *echo.Group, authUseCase usec
 		authPrivateGroup.GET("/me", r.getUser)
 		authPrivateGroup.POST("/logout", r.logout)
 		authPrivateGroup.DELETE("/me", r.deleteUser)
+		authPrivateGroup.POST("/refresh", r.refreshToken)
+
 	}
 }

@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package chat.v1;
+
+option go_package = "internal/chat/proto/v1";
+
+import "google/protobuf/timestamp.proto";
+
+// Models
+
+message Membership {
+  string room_id = 1;
+  string user_id = 2;
+  google.protobuf.Timestamp created_at = 3;
+}
+
+// Requests
+
+message FindMembershipsByRoomIDRequest {
+  string room_id = 1;
+}
+
+message FindMembershipsByUserIDRequest {
+  string user_id = 1;
+}
+
+message FindMembershipByRoomIDAndUserIDRequest {
+  string room_id = 1;
+  string user_id = 2;
+}
+
+message CreateMembershipRequest {
+  string room_id = 1;
+  string user_id = 2;
+}
+
+message DeleteMembershipsByUserIDRequest {
+  string user_id = 1;
+}
+
+message DeleteMembershipByRoomIDAndUserIDRequest {
+  string room_id = 1;
+  string user_id = 2;
+}
+
+// Responses
+
+message MembershipResponse {
+  Membership Membership = 1;
+}
+
+message MembershipsResponse {
+  repeated Membership Membership = 1;
+}
+
+message DeleteMembershipResponse {
+  string message = 1;
+}
+
+// Services
+
+service MembershipService {
+  rpc FindMembershipsByRoomID(FindMembershipsByRoomIDRequest) returns (MembershipsResponse);
+  rpc FindMembershipsByUserID(FindMembershipsByUserIDRequest) returns (MembershipsResponse);
+  rpc FindMembershipByRoomIDAndUserID(FindMembershipByRoomIDAndUserIDRequest) returns (MembershipResponse);
+  rpc CreateMembership(CreateMembershipRequest) returns (MembershipResponse);
+  rpc DeleteMembershipsByUserID(DeleteMembershipsByUserIDRequest) returns (DeleteMembershipResponse);
+  rpc DeleteMembershipByRoomIDAndUserID(DeleteMembershipByRoomIDAndUserIDRequest) returns (DeleteMembershipResponse);
+}
+

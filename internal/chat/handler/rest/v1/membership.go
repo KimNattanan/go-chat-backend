@@ -9,7 +9,7 @@ import (
 	"github.com/labstack/echo/v5"
 )
 
-func (r *V1) findMembershipByRoomID(c *echo.Context) error {
+func (r *V1) findMembershipsByRoomID(c *echo.Context) error {
 	ctx := c.Request().Context()
 	roomID := c.Param("roomID")
 
@@ -22,7 +22,7 @@ func (r *V1) findMembershipByRoomID(c *echo.Context) error {
 	return c.JSON(http.StatusOK, toMembershipResponseList(memberships))
 }
 
-func (r *V1) findMembershipByUserID(c *echo.Context) error {
+func (r *V1) findMembershipsByUserID(c *echo.Context) error {
 	ctx := c.Request().Context()
 	userID := c.Param("userID")
 
@@ -78,7 +78,7 @@ func (r *V1) createMembership(c *echo.Context) error {
 	return c.JSON(http.StatusCreated, toMembershipResponse(membership))
 }
 
-func (r *V1) deleteMembershipByUserID(c *echo.Context) error {
+func (r *V1) deleteMembershipsByUserID(c *echo.Context) error {
 	ctx := c.Request().Context()
 	userID := c.Param("userID")
 

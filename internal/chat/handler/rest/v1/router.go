@@ -27,12 +27,12 @@ func NewChatRoutes(apiPrivateGroup *echo.Group, roomUseCase usecase.RoomUseCase,
 	}
 	membershipPrivateGroup := apiPrivateGroup.Group("/memberships")
 	{
-		membershipPrivateGroup.GET("/room/:roomID", r.findMembershipByRoomID)
+		membershipPrivateGroup.GET("/room/:roomID", r.findMembershipsByRoomID)
 		membershipPrivateGroup.GET("/room/:roomID/user/:userID", r.findMembershipByRoomIDAndUserID)
 		membershipPrivateGroup.POST("/room/:roomID/user/:userID", r.createMembership)
 		membershipPrivateGroup.DELETE("/room/:roomID/user/:userID", r.deleteMembershipByRoomIDAndUserID)
-		membershipPrivateGroup.GET("/user/:userID", r.findMembershipByUserID)
-		membershipPrivateGroup.DELETE("/user/:userID", r.deleteMembershipByUserID)
+		membershipPrivateGroup.GET("/user/:userID", r.findMembershipsByUserID)
+		membershipPrivateGroup.DELETE("/user/:userID", r.deleteMembershipsByUserID)
 	}
 
 	userPrivateGroup := apiPrivateGroup.Group("/users")

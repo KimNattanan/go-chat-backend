@@ -3,7 +3,6 @@ package middleware
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	authPb "github.com/KimNattanan/go-chat-backend/internal/auth/proto/v1"
 	"github.com/KimNattanan/go-chat-backend/internal/platform/config"
@@ -12,7 +11,6 @@ import (
 	"github.com/KimNattanan/go-chat-backend/pkg/token"
 	"github.com/labstack/echo/v5"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func readCookie(c *echo.Context, name string) (string, error) {
@@ -49,28 +47,29 @@ func JWTMiddleware(l logger.Interface, cfg *config.Config, jwtMaker *token.JWTMa
 				return responses.ErrorResponseCustom(c, http.StatusUnauthorized, "unauthorized")
 			}
 
-			newAccessToken, newAccessClaims, err := jwtMaker.CreateToken(refreshClaims.ID, time.Second*time.Duration(cfg.JWT.AccessTTL))
-			if err != nil {
-				l.Error(err, "JWTMiddleware")
-				return responses.ErrorResponseCustom(c, http.StatusInternalServerError, "failed to create token")
-			}
-			newRefreshToken, newRefreshClaims, err := jwtMaker.CreateToken(refreshClaims.ID, time.Second*time.Duration(cfg.JWT.RefreshTTL))
-			if err != nil {
-				l.Error(err, "JWTMiddleware")
-				return responses.ErrorResponseCustom(c, http.StatusInternalServerError, "failed to create token")
-			}
+			// newAccessToken, newAccessClaims, err := jwtMaker.CreateToken(refreshClaims.ID, time.Second*time.Duration(cfg.JWT.AccessTTL))
+			// if err != nil {
+			// 	l.Error(err, "JWTMiddleware")
+			// 	return responses.ErrorResponseCustom(c, http.StatusInternalServerError, "failed to create token")
+			// }
+			// newRefreshToken, newRefreshClaims, err := jwtMaker.CreateToken(refreshClaims.ID, time.Second*time.Duration(cfg.JWT.RefreshTTL))
+			// if err != nil {
+			// 	l.Error(err, "JWTMiddleware")
+			// 	return responses.ErrorResponseCustom(c, http.StatusInternalServerError, "failed to create token")
+			// }
 
 			// grpc ->
 			// 	 u := FindUserByID(UserID)
 			//   s := FindSessionByID(SessionID)
 			//   RevokeSession(SessionID)
 			//   CreateSession(NewSessionID, u.ID, s.CreatedAt, ExpiresAt)
-			if _, err = authGrpcClient.RefreshToken(c.Request().Context(), &authPb.RefreshTokenRequest{
-				UserId:       refreshClaims.ID,
-				SessionId:    refreshClaims.RegisteredClaims.ID,
-				NewSessionId: newRefreshClaims.RegisteredClaims.ID,
-				ExpiresAt:    timestamppb.New(newRefreshClaims.RegisteredClaims.ExpiresAt.Time),
-			}); err != nil {
+			resp, err := authGrpcClient.RefreshToken(c.Request().Context(), &authPb.RefreshTokenRequest{
+				UserId:    refreshClaims.ID,
+				SessionId: refreshClaims.RegisteredClaims.ID,
+				// NewSessionId: newRefreshClaims.RegisteredClaims.ID,
+				// ExpiresAt:    timestamppb.New(newRefreshClaims.RegisteredClaims.ExpiresAt.Time),
+			})
+			if err != nil {
 				l.Error(err, "JWTMiddleware")
 				st, ok := status.FromError(err)
 				if !ok {
@@ -81,8 +80,8 @@ func JWTMiddleware(l logger.Interface, cfg *config.Config, jwtMaker *token.JWTMa
 
 			c.SetCookie(&http.Cookie{
 				Name:     "access-token",
-				Value:    newAccessToken,
-				Expires:  newAccessClaims.ExpiresAt.Time,
+				Value:    resp.Tokens.AccessToken,
+				Expires:  resp.Tokens.AccessTokenExpiresAt.AsTime(),
 				Path:     "/",
 				HttpOnly: true,
 				Secure:   cfg.App.ENV == "production",
@@ -90,14 +89,14 @@ func JWTMiddleware(l logger.Interface, cfg *config.Config, jwtMaker *token.JWTMa
 			})
 			c.SetCookie(&http.Cookie{
 				Name:     "refresh-token",
-				Value:    newRefreshToken,
-				Expires:  newRefreshClaims.ExpiresAt.Time,
+				Value:    resp.Tokens.RefreshToken,
+				Expires:  resp.Tokens.RefreshTokenExpiresAt.AsTime(),
 				Path:     "/",
 				HttpOnly: true,
 				Secure:   cfg.App.ENV == "production",
 				SameSite: http.SameSiteLaxMode,
 			})
-			c.Set("userID", refreshClaims.ID)
+			c.Set("userID", resp.UserId)
 			return next(c)
 		}
 	}

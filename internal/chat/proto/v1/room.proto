@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package chat.v1;
+
+option go_package = "internal/chat/proto/v1";
+
+import "google/protobuf/timestamp.proto";
+
+// Models
+
+message Room {
+  string id = 1;
+  string title = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp updated_at = 4;
+
+  repeated Membership memberships = 5;
+}
+
+message Membership {
+  string user_id = 1;
+  google.protobuf.Timestamp created_at = 2;
+}
+
+// Requests
+
+
+message FindRoomByIDRequest {
+  string id = 1;
+}
+message FindRoomsByUserIDRequest {
+  string user_id = 1;
+}
+message CreateRoomRequest {
+  string title = 1;
+}
+message PatchRoomRequest {
+  string title = 1;
+}
+message DeleteRoomRequest {
+  string id = 1;
+}
+
+// Responses
+
+message RoomResponse {
+  Room room = 1;
+}
+
+message RoomsResponse {
+  repeated Room rooms = 1;
+}
+
+message DeleteRoomResponse {
+  string message = 1;
+}
+
+// Services
+
+service RoomService {
+  rpc FindRoomByID(FindRoomByIDRequest) returns (RoomResponse);
+  rpc FindRoomsByUserID(FindRoomsByUserIDRequest) returns (RoomsResponse);
+  rpc CreateRoom(CreateRoomRequest) returns (RoomResponse);
+  rpc PatchRoom(PatchRoomRequest) returns (RoomResponse);
+  rpc DeleteRoom(DeleteRoomRequest) returns (DeleteRoomResponse);
+}
+

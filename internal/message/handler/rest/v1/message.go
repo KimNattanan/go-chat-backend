@@ -23,7 +23,7 @@ func (r *V1) findMessageByID(c *echo.Context) error {
 	return c.JSON(http.StatusOK, toMessageResponse(message))
 }
 
-func (r *V1) findMessageByRoomID(c *echo.Context) error {
+func (r *V1) findMessagesByRoomID(c *echo.Context) error {
 	ctx := c.Request().Context()
 	roomID := c.Param("roomID")
 
@@ -36,7 +36,7 @@ func (r *V1) findMessageByRoomID(c *echo.Context) error {
 	return c.JSON(http.StatusOK, toMessageResponseList(messages))
 }
 
-func (r *V1) findMessageByUserID(c *echo.Context) error {
+func (r *V1) findMessagesByUserID(c *echo.Context) error {
 	ctx := c.Request().Context()
 	userID := c.Param("userID")
 
@@ -49,7 +49,7 @@ func (r *V1) findMessageByUserID(c *echo.Context) error {
 	return c.JSON(http.StatusOK, toMessageResponseList(messages))
 }
 
-func (r *V1) findMessageByRoomIDAndUserID(c *echo.Context) error {
+func (r *V1) findMessagesByRoomIDAndUserID(c *echo.Context) error {
 	ctx := c.Request().Context()
 	roomID := c.Param("roomID")
 	userID := c.Param("userID")
@@ -115,7 +115,7 @@ func (r *V1) deleteMessage(c *echo.Context) error {
 	return responses.MessageResponse(c, http.StatusOK, "message deleted")
 }
 
-func (r *V1) deleteMessageByRoomID(c *echo.Context) error {
+func (r *V1) deleteMessagesByRoomID(c *echo.Context) error {
 	ctx := c.Request().Context()
 	roomID := c.Param("roomID")
 

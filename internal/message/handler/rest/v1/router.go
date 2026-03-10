@@ -21,11 +21,11 @@ func NewMessageRoutes(apiPrivateGroup *echo.Group, messageUseCase usecase.Messag
 	{
 		messagePrivateGroup.GET("/:id", r.findMessageByID)
 		messagePrivateGroup.DELETE("/:id", r.deleteMessage)
-		messagePrivateGroup.GET("/room/:roomID", r.findMessageByRoomID)
-		messagePrivateGroup.DELETE("/room/:roomID", r.deleteMessageByRoomID)
+		messagePrivateGroup.GET("/room/:roomID", r.findMessagesByRoomID)
+		messagePrivateGroup.DELETE("/room/:roomID", r.deleteMessagesByRoomID)
 		messagePrivateGroup.POST("/room/:roomID/me", r.createMessage)
-		messagePrivateGroup.GET("/room/:roomID/user/:userID", r.findMessageByRoomIDAndUserID)
-		messagePrivateGroup.GET("/user/:userID", r.findMessageByUserID)
+		messagePrivateGroup.GET("/room/:roomID/user/:userID", r.findMessagesByRoomIDAndUserID)
+		messagePrivateGroup.GET("/user/:userID", r.findMessagesByUserID)
 		messagePrivateGroup.PATCH("/user/:userID/anonymize", r.anonymizeUserMessages)
 	}
 }

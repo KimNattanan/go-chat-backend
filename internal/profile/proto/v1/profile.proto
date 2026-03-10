@@ -18,9 +18,18 @@ message Profile {
 
 // Requests
 
+message FindProfileRequest {
+  string user_id = 1;
+}
+
 message CreateProfileRequest {
   string user_id = 1;
   string email = 2;
+  string name = 3;
+}
+
+message PatchProfileRequest {
+  string user_id = 1;
   string name = 3;
 }
 
@@ -41,6 +50,9 @@ message DeleteProfileResponse {
 // Services
 
 service ProfileService {
+  rpc FindProfile(FindProfileRequest) returns (ProfileResponse);
   rpc CreateProfile(CreateProfileRequest) returns (ProfileResponse);
+  rpc PatchProfile(PatchProfileRequest) returns (ProfileResponse);
   rpc DeleteProfile(DeleteProfileRequest) returns (DeleteProfileResponse);
 }
+

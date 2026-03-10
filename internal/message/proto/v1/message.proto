@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package message.v1;
+
+option go_package = "internal/message/proto/v1";
+
+import "google/protobuf/timestamp.proto";
+
+// Models
+
+message Message {
+  string id = 1;
+  string room_id = 2;
+  string user_id = 3;
+  string content = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+// Requests
+
+message FindMessageByIDRequest {
+  string id = 1;
+}
+
+message FindMessagesByRoomIDRequest {
+  string room_id = 1;
+}
+
+message FindMessagesByUserIDRequest {
+  string user_id = 1;
+}
+
+message FindMessagesByRoomIDAndUserIDRequest {
+  string room_id = 1;
+  string user_id = 2;
+}
+
+message CreateMessageRequest {
+  string room_id = 1;
+  string user_id = 2;
+  string content = 3;
+}
+
+message AnonymizeUserMessagesRequest {
+  string user_id = 1;
+}
+
+message DeleteMessageRequest {
+  string id = 1;
+}
+
+message DeleteMessagesByRoomIDRequest {
+  string room_id = 1;
+}
+
+// Responses
+
+message AnonymizeUserMessagesResponse {
+  string message = 1;
+}
+
+message DeleteMessageResponse {
+  string message = 1;
+}
+
+message MessageResponse {
+  Message message = 1;
+}
+
+message MessagesResponse {
+  repeated Message messages = 1;
+}
+
+// Services
+
+service MessageService {
+  rpc FindMessageByID(FindMessageByIDRequest) returns (MessageResponse);
+  rpc FindMessagesByRoomID(FindMessagesByRoomIDRequest) returns (MessagesResponse);
+  rpc FindMessagesByUserID(FindMessagesByUserIDRequest) returns (MessagesResponse);
+  rpc FindMessagesByRoomIDAndUserID(FindMessagesByRoomIDAndUserIDRequest) returns (MessagesResponse);
+  rpc CreateMessage(CreateMessageRequest) returns (MessageResponse);
+  rpc AnonymizeUserMessages(AnonymizeUserMessagesRequest) returns (AnonymizeUserMessagesResponse);
+  rpc DeleteMessage(DeleteMessageRequest) returns (DeleteMessageResponse);
+  rpc DeleteMessagesByRoomID(DeleteMessagesByRoomIDRequest) returns (DeleteMessageResponse);
+}
+
