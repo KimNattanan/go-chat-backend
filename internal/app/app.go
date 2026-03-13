@@ -68,17 +68,18 @@ func Run(cfg *config.Config) {
 
 	authGrpcClient := authPb.NewAuthServiceClient(grpcClientConn)
 
-	// RabbitMQ conn
-	rmqClient := rabbitmq.New(cfg.RMQ.URL, "queue1")
-	if err := rmqClient.Connect(); err != nil {
-		l.Fatal(fmt.Errorf("app - Run - rmqClient.New: %w", err))
+	// RabbitMQ Publisher
+	rmqPublisher, err := rabbitmq.NewPublisher(cfg.RMQ.URL, "app.fanout")
+	if err != nil {
+		l.Fatal(fmt.Errorf("app - Run - rabbitmq.NewPublisher: %w", err))
 	}
+	defer rmqPublisher.Close()
 
 	// Use-Case
 	authUseCase := authUseCase.New(
 		authPersistent.NewUserRepo(pg.DB),
 		authPersistent.NewSessionRepo(rdb),
-		rmqClient,
+		rmqPublisher,
 		jwtMaker,
 		cfg.JWT.AccessTTL,
 		cfg.JWT.RefreshTTL,
@@ -90,7 +91,7 @@ func Run(cfg *config.Config) {
 
 	roomUseCase := roomUseCase.New(
 		chatPersistent.NewRoomRepo(pg.DB),
-		rmqClient,
+		rmqPublisher,
 	)
 	membershipUseCase := membershipUseCase.New(
 		chatPersistent.NewMembershipRepo(pg.DB),
@@ -101,9 +102,13 @@ func Run(cfg *config.Config) {
 		messagePersistent.NewMessageRepo(pg.DB),
 	)
 
-	// RabbitMQ Consumer
-	rmqRouter := make(map[string]rabbitmq.Handler)
-	profileAmqpRpc.NewRouter(rmqRouter, profileUseCase, l)
+	// RabbitMQ Fanout Server
+	rmqServer := rabbitmq.New(l, cfg.RMQ.URL)
+	rmqServer.RegisterConsumer(
+		"profiles.queue",
+		2,
+		profileAmqpRpc.NewRouter(profileUseCase, l),
+	)
 
 	// gRPC Server
 	grpcServer := grpcserver.New(l, grpcserver.Port(cfg.GRPC.Port))
@@ -132,9 +137,7 @@ func Run(cfg *config.Config) {
 	messageRest.NewRouter(httpServer.Echo, cfg, messageUseCase, l, jwtMiddleware)
 
 	// Start servers
-	if err := rmqClient.Consume(2, rmqRouter); err != nil {
-		l.Error("app - Run - rmqClient.Consume: %w", err)
-	}
+	rmqServer.Start()
 	grpcServer.Start()
 	httpServer.Start()
 
@@ -149,6 +152,8 @@ func Run(cfg *config.Config) {
 		l.Error(fmt.Errorf("app - Run - httpServer.Notify: %w", err))
 	case err = <-grpcServer.Notify():
 		l.Error(fmt.Errorf("app - Run - grpcServer.Notify: %w", err))
+	case err = <-rmqServer.Notify():
+		l.Error(fmt.Errorf("app - Run - rmqServer.Notify: %w", err))
 	}
 
 	// Shutdown
@@ -162,8 +167,8 @@ func Run(cfg *config.Config) {
 		l.Error(fmt.Errorf("app - Run - grpcServer.Shutdown: %w", err))
 	}
 
-	err = rmqClient.Close()
+	err = rmqServer.Shutdown()
 	if err != nil {
-		l.Error(fmt.Errorf("app - Run - rmqClient.Close: %w", err))
+		l.Error(fmt.Errorf("app - Run - rmqServer.Shutdown: %w", err))
 	}
 }

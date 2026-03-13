@@ -10,13 +10,13 @@ import (
 
 type UseCase struct {
 	roomRepo   repo.RoomRepo
-	amqpClient *rabbitmq.Client
+	amqpPublisher *rabbitmq.Publisher
 }
 
-func New(roomRepo repo.RoomRepo, amqpClient *rabbitmq.Client) *UseCase {
+func New(roomRepo repo.RoomRepo, amqpPublisher *rabbitmq.Publisher) *UseCase {
 	return &UseCase{
 		roomRepo:   roomRepo,
-		amqpClient: amqpClient,
+		amqpPublisher: amqpPublisher,
 	}
 }
 
@@ -40,7 +40,7 @@ func (u *UseCase) Patch(ctx context.Context, id string, room *entity.Room) (*ent
 }
 
 func (u *UseCase) Delete(ctx context.Context, id string) error {
-	if err := u.amqpClient.Publish("room.deleted", map[string]string{
+	if err := u.amqpPublisher.Publish("room.deleted", map[string]string{
 		"id": id,
 	}); err != nil {
 		return err

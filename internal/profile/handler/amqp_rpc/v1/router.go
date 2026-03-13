@@ -7,16 +7,15 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-// NewTranslationRoutes -.
-func NewTranslationRoutes(routes map[string]rabbitmq.Handler, profileUseCase usecase.ProfileUseCase, l logger.Interface) {
+// NewProfileRoutes -.
+func NewProfileRoutes(profileUseCase usecase.ProfileUseCase, l logger.Interface) map[string]rabbitmq.Handler {
 	r := &V1{
 		profileUsecase: profileUseCase,
 		l:              l,
 		v:              validator.New(validator.WithRequiredStructEnabled()),
 	}
-
-	{
-		routes["createProfile"] = r.createProfile()
-		routes["deleteProfile"] = r.deleteProfile()
-	}
+	routes := make(map[string]rabbitmq.Handler)
+	routes["user.created"] = r.createProfile
+	routes["user.deleted"] = r.deleteProfile
+	return routes
 }

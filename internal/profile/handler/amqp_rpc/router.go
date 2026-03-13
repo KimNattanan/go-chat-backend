@@ -8,6 +8,6 @@ import (
 )
 
 // NewRouter -.
-func NewRouter(routes map[string]rabbitmq.Handler, profileUseCase usecase.ProfileUseCase, l logger.Interface) {
-	v1.NewTranslationRoutes(routes, profileUseCase, l)
+func NewRouter(profileUseCase usecase.ProfileUseCase, l logger.Interface) map[string]rabbitmq.Handler {
+	return v1.NewProfileRoutes(profileUseCase, l)
 }
