@@ -31,7 +31,8 @@ type (
 
 	// HTTP -.
 	HTTP struct {
-		Port string `env:"HTTP_PORT,required"`
+		Port           string `env:"HTTP_PORT,required"`
+		AllowedOrigins string `env:"HTTP_ALLOWED_ORIGINS" envDefault:"http://localhost:3000"`
 	}
 
 	// Log -.
@@ -58,6 +59,7 @@ type (
 
 	// GRPC -.
 	GRPC struct {
+		Host string `env:"GRPC_HOST,required"`
 		Port string `env:"GRPC_PORT,required"`
 	}
 
@@ -76,8 +78,8 @@ type (
 	// JWT -.
 	JWT struct {
 		Secret     string `env:"JWT_SECRET,required"`
-		AccessTTL  int    `env:"ACCESS_TTL" envDefault:"3600"`   // 1 hour, in seconds
-		RefreshTTL int    `env:"ACCESS_TTL" envDefault:"604800"` // 7 days
+		AccessTTL  int    `env:"ACCESS_TTL" envDefault:"3600"`    // 1 hour, in seconds
+		RefreshTTL int    `env:"REFRESH_TTL" envDefault:"604800"` // 7 days
 	}
 )
 

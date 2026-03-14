@@ -7,6 +7,7 @@ import (
 	"github.com/KimNattanan/go-chat-backend/internal/platform/wsserver"
 	"github.com/KimNattanan/go-chat-backend/internal/realtime/handler/ws/v1/request"
 	"github.com/KimNattanan/go-chat-backend/pkg/responses"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v5"
 )
@@ -19,12 +20,16 @@ func (r *V1) roomWebSocket(c *echo.Context) error {
 		r.l.Error(err, "v1 - roomWebSocket")
 		return responses.ErrorResponse(c, err)
 	}
-	defer conn.Close()
+	r.wsServer.Register(roomID, conn)
+	defer func() {
+		r.wsServer.Unregister(roomID, conn)
+		conn.Close()
+	}()
 
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
-			continue
+			break
 		}
 		msg, err := wsserver.ParseMessage(message)
 		if err != nil {
@@ -43,10 +48,12 @@ func (r *V1) roomWebSocket(c *echo.Context) error {
 				conn.WriteMessage(websocket.TextMessage, []byte("invalid request"))
 				continue
 			}
+			messageID := uuid.New().String()
 			r.amqpPublisher.Publish("message.created", map[string]string{
-				"room_id": roomID,
-				"user_id": req.UserID,
-				"content": req.Content,
+				"message_id": messageID,
+				"room_id":    roomID,
+				"user_id":    req.UserID,
+				"content":    req.Content,
 			})
 
 		case "delete_message":
@@ -72,4 +79,6 @@ func (r *V1) roomWebSocket(c *echo.Context) error {
 			continue
 		}
 	}
+
+	return nil
 }

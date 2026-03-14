@@ -66,7 +66,7 @@ func Run(cfg *config.Config) {
 	rdb := redisclient.New(cfg.Redis.Address, cfg.Redis.Password, cfg.Redis.DB)
 
 	// gRPC Client
-	grpcClientConn, err := grpc.NewClient("localhost:"+cfg.GRPC.Port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	grpcClientConn, err := grpc.NewClient(cfg.GRPC.Host+":"+cfg.GRPC.Port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		l.Fatal(fmt.Errorf("app - Run - grpc.NewClient: %w", err))
 	}
@@ -148,7 +148,7 @@ func Run(cfg *config.Config) {
 	// HTTP Server
 	httpServer := httpserver.New(l, httpserver.Port(cfg.HTTP.Port))
 	httpServer.Echo.Use(echoMiddleware.CORSWithConfig(echoMiddleware.CORSConfig{
-		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowOrigins:     []string{cfg.HTTP.AllowedOrigins},
 		AllowHeaders:     []string{"Accept", "Content-Type", "Origin", "Authorization"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowCredentials: true,

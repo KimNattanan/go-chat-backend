@@ -16,22 +16,22 @@ import (
 )
 
 type UseCase struct {
-	userRepo    repo.UserRepo
-	sessionRepo repo.SessionRepo
-	amqpPublisher  *rabbitmq.Publisher
-	jwtMaker    *token.JWTMaker
-	accessTTL   time.Duration
-	refreshTTL  time.Duration
+	userRepo      repo.UserRepo
+	sessionRepo   repo.SessionRepo
+	amqpPublisher *rabbitmq.Publisher
+	jwtMaker      *token.JWTMaker
+	accessTTL     time.Duration
+	refreshTTL    time.Duration
 }
 
 func New(userRepo repo.UserRepo, sessionRepo repo.SessionRepo, amqpPublisher *rabbitmq.Publisher, jwtMaker *token.JWTMaker, accessTTL, refreshTTL int) *UseCase {
 	return &UseCase{
-		userRepo:    userRepo,
-		sessionRepo: sessionRepo,
-		amqpPublisher:  amqpPublisher,
-		jwtMaker:    jwtMaker,
-		accessTTL:   time.Duration(accessTTL) * time.Second,
-		refreshTTL:  time.Duration(refreshTTL) * time.Second,
+		userRepo:      userRepo,
+		sessionRepo:   sessionRepo,
+		amqpPublisher: amqpPublisher,
+		jwtMaker:      jwtMaker,
+		accessTTL:     time.Duration(accessTTL) * time.Second,
+		refreshTTL:    time.Duration(refreshTTL) * time.Second,
 	}
 }
 
@@ -44,7 +44,7 @@ func (u *UseCase) FindUserByEmail(ctx context.Context, email string) (*entity.Us
 }
 
 func (u *UseCase) DeleteUser(ctx context.Context, id string) error {
-	if err := u.amqpPublisher.Publish("uesr.deleted", map[string]string{
+	if err := u.amqpPublisher.Publish("user.deleted", map[string]string{
 		"user_id": id,
 	}); err != nil {
 		return fmt.Errorf("AuthUseCase - DeleteUser - u.amqpPublisher.Publish: %w", err)
@@ -163,9 +163,9 @@ func (u *UseCase) Register(ctx context.Context, email, password, name string) (*
 }
 
 func (u *UseCase) Logout(ctx context.Context, refreshToken string) error {
-	refreshClaims, err := u.jwtMaker.VerfiyToken(refreshToken)
+	refreshClaims, err := u.jwtMaker.VerifyToken(refreshToken)
 	if err != nil {
-		return fmt.Errorf("AuthUseCase - Logout - u.jwtMaker.VerfiyToken: %w", err)
+		return fmt.Errorf("AuthUseCase - Logout - u.jwtMaker.VerifyToken: %w", err)
 	}
 	if err := u.sessionRepo.Revoke(ctx, refreshClaims.RegisteredClaims.ID); err != nil {
 		return fmt.Errorf("AuthUseCase - Logout - u.sessionRepo.Revoke: %w", err)
@@ -217,9 +217,9 @@ func (u *UseCase) RefreshTokenBySessionID(ctx context.Context, userID, oldSessio
 }
 
 func (u *UseCase) RefreshToken(ctx context.Context, userID, oldRefreshToken string) (*entity.User, string, *token.UserClaims, string, *token.UserClaims, error) {
-	oldRefreshClaims, err := u.jwtMaker.VerfiyToken(oldRefreshToken)
+	oldRefreshClaims, err := u.jwtMaker.VerifyToken(oldRefreshToken)
 	if err != nil {
-		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - RefreshToken - u.jwtMaker.VerfiyToken: %w", err)
+		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - RefreshToken - u.jwtMaker.VerifyToken: %w", err)
 	}
 	return u.RefreshTokenBySessionID(ctx, userID, oldRefreshClaims.RegisteredClaims.ID)
 }

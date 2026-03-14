@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/KimNattanan/go-chat-backend/internal/message/handler/amqp_rpc/v1/request"
+	"github.com/KimNattanan/go-chat-backend/internal/realtime/handler/amqp_rpc/v1/request"
 )
 
 func (r *V1) messageCreated(ctx context.Context, data []byte) error {
@@ -19,8 +19,9 @@ func (r *V1) messageCreated(ctx context.Context, data []byte) error {
 	}
 
 	r.wsServer.BroadcastMessage(req.RoomID, "create_message", map[string]string{
-		"user_id": req.UserID,
-		"content": req.Content,
+		"message_id": req.MessageID,
+		"user_id":    req.UserID,
+		"content":    req.Content,
 	})
 
 	return nil

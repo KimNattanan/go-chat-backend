@@ -20,6 +20,11 @@ func (r *V1) messageCreated(ctx context.Context, data []byte) error {
 		return err
 	}
 
+	messageID, err := uuid.Parse(req.MessageID)
+	if err != nil {
+		r.l.Error(err, "amqp_rpc - V1 - messageCreated")
+		return err
+	}
 	roomID, err := uuid.Parse(req.RoomID)
 	if err != nil {
 		r.l.Error(err, "amqp_rpc - V1 - messageCreated")
@@ -32,6 +37,7 @@ func (r *V1) messageCreated(ctx context.Context, data []byte) error {
 	}
 
 	message := &entity.Message{
+		ID:      messageID,
 		RoomID:  roomID,
 		UserID:  userID,
 		Content: req.Content,

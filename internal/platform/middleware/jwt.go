@@ -31,7 +31,7 @@ func JWTMiddleware(l logger.Interface, cfg *config.Config, jwtMaker *token.JWTMa
 				l.Error(err, "JWTMiddleware")
 				return responses.ErrorResponseCustom(c, http.StatusInternalServerError, "failed to read cookie")
 			}
-			accessClaims, err := jwtMaker.VerfiyToken(accessToken)
+			accessClaims, err := jwtMaker.VerifyToken(accessToken)
 			if err == nil {
 				c.Set("userID", accessClaims.ID)
 				return next(c)
@@ -41,7 +41,7 @@ func JWTMiddleware(l logger.Interface, cfg *config.Config, jwtMaker *token.JWTMa
 				l.Error(err, "JWTMiddleware")
 				return responses.ErrorResponseCustom(c, http.StatusInternalServerError, "failed to read cookie")
 			}
-			refreshClaims, err := jwtMaker.VerfiyToken(refreshToken)
+			refreshClaims, err := jwtMaker.VerifyToken(refreshToken)
 			if err != nil {
 				l.Error(err, "JWTMiddleware")
 				return responses.ErrorResponseCustom(c, http.StatusUnauthorized, "unauthorized")

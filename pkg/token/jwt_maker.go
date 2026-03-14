@@ -29,7 +29,7 @@ func (maker *JWTMaker) CreateToken(id string, duration time.Duration) (string, *
 	return tokenStr, claims, nil
 }
 
-func (maker *JWTMaker) VerfiyToken(tokenStr string) (*UserClaims, error) {
+func (maker *JWTMaker) VerifyToken(tokenStr string) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)
 		if !ok {
