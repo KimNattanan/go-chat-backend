@@ -1,12 +1,10 @@
 package request
 
-type MessageCreatedRequest struct {
-	RoomID  string `json:"room_id" validate:"required,uuid"`
+type CreateMessageRequest struct {
 	UserID  string `json:"user_id" validate:"required,uuid"`
 	Content string `json:"content" validate:"required"`
 }
 
-type MessageDeletedRequest struct {
-	RoomID    string `json:"room_id" validate:"required,uuid"`
+type DeleteMessageRequest struct {
 	MessageID string `json:"message_id" validate:"required,uuid"`
 }

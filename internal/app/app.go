@@ -32,8 +32,12 @@ import (
 	messagePersistent "github.com/KimNattanan/go-chat-backend/internal/message/repo/persistent"
 	messageUseCase "github.com/KimNattanan/go-chat-backend/internal/message/usecase/message"
 
+	realtimeAmqpRpc "github.com/KimNattanan/go-chat-backend/internal/realtime/handler/amqp_rpc"
+	realtimeWS "github.com/KimNattanan/go-chat-backend/internal/realtime/handler/ws"
+
 	"github.com/KimNattanan/go-chat-backend/internal/platform/config"
 	"github.com/KimNattanan/go-chat-backend/internal/platform/middleware"
+	"github.com/KimNattanan/go-chat-backend/internal/platform/wsserver"
 
 	"github.com/KimNattanan/go-chat-backend/pkg/grpcserver"
 	"github.com/KimNattanan/go-chat-backend/pkg/httpserver"
@@ -104,6 +108,9 @@ func Run(cfg *config.Config) {
 		messagePersistent.NewMessageRepo(pg.DB),
 	)
 
+	// WebSocket Server
+	wsServer := wsserver.New(l)
+
 	// RabbitMQ Fanout Server
 	rmqServer := rabbitmq.New(l, cfg.RMQ.URL)
 	rmqServer.RegisterConsumer(
@@ -120,6 +127,11 @@ func Run(cfg *config.Config) {
 		"chats.queue",
 		1,
 		chatAmqpRpc.NewRouter(roomUseCase, membershipUseCase, l),
+	)
+	rmqServer.RegisterConsumer(
+		"realtime.queue",
+		1,
+		realtimeAmqpRpc.NewRouter(wsServer, l),
 	)
 
 	// gRPC Server
@@ -147,6 +159,7 @@ func Run(cfg *config.Config) {
 	profileRest.NewRouter(httpServer.Echo, cfg, profileUseCase, l, jwtMiddleware)
 	chatRest.NewRouter(httpServer.Echo, cfg, roomUseCase, membershipUseCase, l, jwtMiddleware)
 	messageRest.NewRouter(httpServer.Echo, cfg, messageUseCase, l, jwtMiddleware)
+	realtimeWS.NewRouter(httpServer.Echo, wsServer, rmqPublisher, l, jwtMiddleware)
 
 	// Start servers
 	rmqServer.Start()
