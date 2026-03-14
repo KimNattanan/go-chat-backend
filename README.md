@@ -1,5 +1,4 @@
 # go-chat-backend
-![status](https://img.shields.io/badge/status-work--in--progress-yellow)
 
 Chat backend implemented in Go, following a modular monolith architecture with support for REST, gRPC, WebSocket APIs, and RabbitMQ-based messaging.
 
