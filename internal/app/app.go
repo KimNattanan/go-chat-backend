@@ -19,12 +19,14 @@ import (
 	profilePersistent "github.com/KimNattanan/go-chat-backend/internal/profile/repo/persistent"
 	profileUseCase "github.com/KimNattanan/go-chat-backend/internal/profile/usecase/profile"
 
+	chatAmqpRpc "github.com/KimNattanan/go-chat-backend/internal/chat/handler/amqp_rpc"
 	chatGrpc "github.com/KimNattanan/go-chat-backend/internal/chat/handler/grpc"
 	chatRest "github.com/KimNattanan/go-chat-backend/internal/chat/handler/rest"
 	chatPersistent "github.com/KimNattanan/go-chat-backend/internal/chat/repo/persistent"
 	membershipUseCase "github.com/KimNattanan/go-chat-backend/internal/chat/usecase/membership"
 	roomUseCase "github.com/KimNattanan/go-chat-backend/internal/chat/usecase/room"
 
+	messageAmqpRpc "github.com/KimNattanan/go-chat-backend/internal/message/handler/amqp_rpc"
 	messageGrpc "github.com/KimNattanan/go-chat-backend/internal/message/handler/grpc"
 	messageRest "github.com/KimNattanan/go-chat-backend/internal/message/handler/rest"
 	messagePersistent "github.com/KimNattanan/go-chat-backend/internal/message/repo/persistent"
@@ -106,8 +108,18 @@ func Run(cfg *config.Config) {
 	rmqServer := rabbitmq.New(l, cfg.RMQ.URL)
 	rmqServer.RegisterConsumer(
 		"profiles.queue",
-		2,
+		1,
 		profileAmqpRpc.NewRouter(profileUseCase, l),
+	)
+	rmqServer.RegisterConsumer(
+		"messages.queue",
+		1,
+		messageAmqpRpc.NewRouter(messageUseCase, l),
+	)
+	rmqServer.RegisterConsumer(
+		"chats.queue",
+		1,
+		chatAmqpRpc.NewRouter(roomUseCase, membershipUseCase, l),
 	)
 
 	// gRPC Server

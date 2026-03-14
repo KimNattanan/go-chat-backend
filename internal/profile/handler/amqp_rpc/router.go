@@ -1,4 +1,4 @@
-package v1
+package amqp_rpc
 
 import (
 	v1 "github.com/KimNattanan/go-chat-backend/internal/profile/handler/amqp_rpc/v1"

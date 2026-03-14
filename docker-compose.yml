@@ -22,7 +22,6 @@ services:
   rabbitmq:
     container_name: rabbitmq
     image: rabbitmq:4.2.4-management-alpine
-    tty: true
     environment:
       RABBITMQ_DEFAULT_USER: 'guest'
       RABBITMQ_DEFAULT_PASS: 'guest'
