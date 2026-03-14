@@ -1,6 +1,7 @@
 package rabbitmq
 
 import (
+	"maps"
 	"context"
 	"errors"
 	"sync"
@@ -14,19 +15,19 @@ import (
 const (
 	_defaultExchangeName   = "app.fanout"
 	_defaultReconnectDelay = 5 * time.Second
+	_defaultRetryAttempts  = 3
 )
 
-// Handler is a callback for processing a single message type.
-type Handler func(ctx context.Context, d *amqp.Delivery, data []byte)
+type Handler func(ctx context.Context, data []byte) error
 
-// Server provides a RabbitMQ fanout exchange consumer, similar lifecycle to http/grpc servers.
 type Server struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 	eg     *errgroup.Group
 
-	url      string
-	exchange string
+	url           string
+	exchange      string
+	retryAttempts int
 
 	mu        sync.RWMutex
 	conn      *amqp.Connection
@@ -50,13 +51,14 @@ func New(l logger.Interface, url string, opts ...Option) *Server {
 	group, ctx := errgroup.WithContext(ctx)
 
 	s := &Server{
-		ctx:      ctx,
-		cancel:   cancel,
-		eg:       group,
-		url:      url,
-		exchange: _defaultExchangeName,
-		notify:   make(chan error, 1),
-		logger:   l,
+		ctx:           ctx,
+		cancel:        cancel,
+		eg:            group,
+		url:           url,
+		exchange:      _defaultExchangeName,
+		notify:        make(chan error, 1),
+		logger:        l,
+		retryAttempts: _defaultRetryAttempts,
 	}
 
 	for _, opt := range opts {
@@ -66,8 +68,6 @@ func New(l logger.Interface, url string, opts ...Option) *Server {
 	return s
 }
 
-// RegisterConsumer registers a queue with its router and worker count.
-// Each service can call this to declare its own queue and handlers.
 func (s *Server) RegisterConsumer(queue string, workers int, router map[string]Handler) {
 	if workers <= 0 {
 		workers = 1
@@ -83,10 +83,8 @@ func (s *Server) RegisterConsumer(queue string, workers int, router map[string]H
 	})
 }
 
-// Start establishes connection, declares fanout exchange and queues, and starts workers.
 func (s *Server) Start() {
 	s.eg.Go(func() error {
-		// Simple reconnect loop until context is cancelled.
 		for {
 			if err := s.runOnce(); err != nil {
 				if errors.Is(err, context.Canceled) {
@@ -100,7 +98,6 @@ func (s *Server) Start() {
 				default:
 				}
 
-				// On connection-level errors, wait and retry until context done.
 				select {
 				case <-time.After(_defaultReconnectDelay):
 					continue
@@ -116,12 +113,10 @@ func (s *Server) Start() {
 	s.logger.Info("rabbitmq - Server - Started")
 }
 
-// Notify returns a channel for asynchronous error notification.
 func (s *Server) Notify() <-chan error {
 	return s.notify
 }
 
-// Shutdown gracefully stops consumers and closes connection.
 func (s *Server) Shutdown() error {
 	var shutdownErrors []error
 
@@ -175,6 +170,46 @@ func (s *Server) runOnce() error {
 		return err
 	}
 
+	if err := ch.ExchangeDeclare(
+		"app.dlx",
+		"direct",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	); err != nil {
+		_ = ch.Close()
+		_ = conn.Close()
+		return err
+	}
+
+	_, err = ch.QueueDeclare(
+		"app.dlq",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		_ = ch.Close()
+		_ = conn.Close()
+		return err
+	}
+
+	if err := ch.QueueBind(
+		"app.dlq",
+		"",
+		"app.dlx",
+		false,
+		nil,
+	); err != nil {
+		_ = ch.Close()
+		_ = conn.Close()
+		return err
+	}
+
 	s.mu.Lock()
 	s.conn = conn
 	s.channel = ch
@@ -187,7 +222,6 @@ func (s *Server) runOnce() error {
 		}
 	}
 
-	// Block until context is done or connection is closed.
 	errCh := make(chan *amqp.Error, 1)
 	ch.NotifyClose(errCh)
 
@@ -271,11 +305,84 @@ func (s *Server) worker(
 			}
 
 			ctx, cancel := context.WithTimeout(s.ctx, 5*time.Minute)
-			handler(ctx, &d, msg.Data)
+			err = handler(ctx, msg.Data)
 			cancel()
+			if err != nil {
+				if retryErr := s.retry(&d); retryErr != nil {
+					s.logger.Error(retryErr, "rabbitmq - worker - retry failed")
+					d.Nack(false, false)
+				}
+				continue
+			}
 
 			d.Ack(false)
 		}
 	}
 }
 
+func getRetryCount(headers amqp.Table) int {
+	v, ok := headers["x-retry-count"]
+	if !ok {
+		return 0
+	}
+	n, ok := v.(int)
+	if !ok {
+		return 0
+	}
+	return n
+}
+
+func (s *Server) retry(d *amqp.Delivery) error {
+	retryCount := getRetryCount(d.Headers) + 1
+
+	// send to DLQ
+	if retryCount >= s.retryAttempts {
+		dlqHeaders := amqp.Table{}
+		maps.Copy(dlqHeaders, d.Headers)
+		dlqHeaders["x-retry-count"] = retryCount
+		if err := s.channel.Publish(
+			"app.dlx",
+			"",
+			false,
+			false,
+			amqp.Publishing{
+				Headers:     dlqHeaders,
+				ContentType: d.ContentType,
+				Body:        d.Body,
+			},
+		); err != nil {
+			d.Nack(false, false)
+			return err
+		}
+		d.Ack(false)
+		return nil
+	}
+
+	// republish
+
+	headers := amqp.Table{}
+	maps.Copy(headers, d.Headers)
+	headers["x-retry-count"] = retryCount
+
+	exchange := d.Exchange
+	if exchange == "" {
+		exchange = s.exchange
+	}
+
+	if err := s.channel.Publish(
+		exchange,
+		d.RoutingKey,
+		false,
+		false,
+		amqp.Publishing{
+			Headers:     headers,
+			ContentType: d.ContentType,
+			Body:        d.Body,
+		},
+	); err != nil {
+		d.Nack(false, false)
+		return err
+	}
+	d.Ack(false)
+	return nil
+}
