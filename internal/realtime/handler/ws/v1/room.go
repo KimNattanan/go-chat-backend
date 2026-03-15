@@ -3,6 +3,7 @@ package v1
 import (
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/KimNattanan/go-chat-backend/internal/platform/wsserver"
 	"github.com/KimNattanan/go-chat-backend/internal/realtime/handler/ws/v1/request"
@@ -10,6 +11,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v5"
+)
+
+const (
+	pongWait   = 60 * time.Second
+	writeWait  = 10 * time.Second
 )
 
 func (r *V1) roomWebSocket(c *echo.Context) error {
@@ -26,11 +32,24 @@ func (r *V1) roomWebSocket(c *echo.Context) error {
 		conn.Close()
 	}()
 
+	conn.SetReadDeadline(time.Now().Add(pongWait))
+	conn.SetPingHandler(func(appData string) error {
+		conn.SetReadDeadline(time.Now().Add(pongWait))
+		return conn.WriteControl(websocket.PongMessage, []byte(appData), time.Now().Add(writeWait))
+	})
+
 	for {
-		_, message, err := conn.ReadMessage()
+		messageType, message, err := conn.ReadMessage()
 		if err != nil {
 			break
 		}
+		conn.SetReadDeadline(time.Now().Add(pongWait))
+
+		// Ignore control frames
+		if messageType != websocket.TextMessage && messageType != websocket.BinaryMessage {
+			continue
+		}
+		
 		msg, err := wsserver.ParseMessage(message)
 		if err != nil {
 			continue
