@@ -9,12 +9,12 @@ import (
 )
 
 // NewWsRoutes -.
-func NewWsRoutes(apiPrivateGroup *echo.Group, wsServer *wsserver.Server, amqpPublisher *rabbitmq.Publisher, l logger.Interface) {
+func NewWsRoutes(apiPrivateGroup *echo.Group, wsServer *wsserver.Server, mqPublisher rabbitmq.Publisher, l logger.Interface) {
 	r := &V1{
-		wsServer:      wsServer,
-		amqpPublisher: amqpPublisher,
-		l:             l,
-		v:             validator.New(validator.WithRequiredStructEnabled()),
+		wsServer:    wsServer,
+		mqPublisher: mqPublisher,
+		l:           l,
+		v:           validator.New(validator.WithRequiredStructEnabled()),
 	}
 
 	apiPrivateGroup.GET("/rooms/:roomID/ws", r.roomWebSocket)

@@ -5,18 +5,21 @@ import (
 
 	"github.com/KimNattanan/go-chat-backend/internal/chat/entity"
 	"github.com/KimNattanan/go-chat-backend/internal/chat/repo"
-	"github.com/KimNattanan/go-chat-backend/pkg/rabbitmq"
 )
 
-type UseCase struct {
-	roomRepo   repo.RoomRepo
-	amqpPublisher *rabbitmq.Publisher
+type eventPublisher interface {
+	Publish(msgType string, data any) error
 }
 
-func New(roomRepo repo.RoomRepo, amqpPublisher *rabbitmq.Publisher) *UseCase {
+type UseCase struct {
+	roomRepo       repo.RoomRepo
+	eventPublisher eventPublisher
+}
+
+func New(roomRepo repo.RoomRepo, eventPublisher eventPublisher) *UseCase {
 	return &UseCase{
-		roomRepo:   roomRepo,
-		amqpPublisher: amqpPublisher,
+		roomRepo:       roomRepo,
+		eventPublisher: eventPublisher,
 	}
 }
 
@@ -40,7 +43,7 @@ func (u *UseCase) Patch(ctx context.Context, id string, room *entity.Room) (*ent
 }
 
 func (u *UseCase) Delete(ctx context.Context, id string) error {
-	if err := u.amqpPublisher.Publish("room.deleted", map[string]string{
+	if err := u.eventPublisher.Publish("room.deleted", map[string]string{
 		"id": id,
 	}); err != nil {
 		return err

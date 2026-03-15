@@ -4,13 +4,17 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type Publisher struct {
+type Publisher interface {
+	Publish(msgType string, data any) error
+}
+
+type RabbitMQPublisher struct {
 	conn     *amqp.Connection
 	channel  *amqp.Channel
 	exchange string
 }
 
-func NewPublisher(url, exchange string) (*Publisher, error) {
+func NewRabbitMQPublisher(url, exchange string) (*RabbitMQPublisher, error) {
 	if exchange == "" {
 		exchange = _defaultExchangeName
 	}
@@ -40,14 +44,14 @@ func NewPublisher(url, exchange string) (*Publisher, error) {
 		return nil, err
 	}
 
-	return &Publisher{
+	return &RabbitMQPublisher{
 		conn:     conn,
 		channel:  ch,
 		exchange: exchange,
 	}, nil
 }
 
-func (p *Publisher) Close() error {
+func (p *RabbitMQPublisher) Close() error {
 	if p.channel != nil {
 		_ = p.channel.Close()
 	}
@@ -57,7 +61,7 @@ func (p *Publisher) Close() error {
 	return nil
 }
 
-func (p *Publisher) Publish(msgType string, data any) error {
+func (p *RabbitMQPublisher) Publish(msgType string, data any) error {
 	body, err := NewMessage(msgType, data)
 	if err != nil {
 		return err

@@ -1,0 +1,54 @@
+packages:
+
+  # Chat Repo
+  github.com/KimNattanan/go-chat-backend/internal/chat/repo:
+    config:
+      dir: ./internal/chat/usecase/mocks/
+      filename: repo.go
+      pkgname: mocks
+      structname: "{{.Mock}}{{.InterfaceName}}"
+    interfaces:
+      RoomRepo: {}
+      MembershipRepo: {}
+
+  # Message Repo
+  github.com/KimNattanan/go-chat-backend/internal/message/repo:
+    config:
+      dir: ./internal/message/usecase/mocks/
+      filename: repo.go
+      pkgname: mocks
+      structname: "{{.Mock}}{{.InterfaceName}}"
+    interfaces:
+      MessageRepo: {}
+
+  # Auth Repo
+  github.com/KimNattanan/go-chat-backend/internal/auth/repo:
+    config:
+      dir: ./internal/auth/usecase/mocks/
+      filename: repo.go
+      pkgname: mocks
+      structname: "{{.Mock}}{{.InterfaceName}}"
+    interfaces:
+      UserRepo: {}
+      SessionRepo: {}
+  
+  # Profile Repo
+  github.com/KimNattanan/go-chat-backend/internal/profile/repo:
+    config:
+      dir: ./internal/profile/usecase/mocks/
+      filename: repo.go
+      pkgname: mocks
+      structname: "{{.Mock}}{{.InterfaceName}}"
+    interfaces:
+      ProfileRepo: {}
+  
+  # Auth gRPC Client
+  github.com/KimNattanan/go-chat-backend/internal/auth/proto/v1:
+    config:
+      dir: ./internal/auth/proto/v1/mocks
+      filename: grpc_client.go
+      pkgname: mocks
+      structname: "{{.Mock}}{{.InterfaceName}}"
+      include-auto-generated: true
+    interfaces:
+      AuthServiceClient: {}

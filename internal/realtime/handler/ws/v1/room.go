@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	pongWait   = 60 * time.Second
-	writeWait  = 10 * time.Second
+	pongWait  = 60 * time.Second
+	writeWait = 10 * time.Second
 )
 
 func (r *V1) roomWebSocket(c *echo.Context) error {
@@ -49,7 +49,7 @@ func (r *V1) roomWebSocket(c *echo.Context) error {
 		if messageType != websocket.TextMessage && messageType != websocket.BinaryMessage {
 			continue
 		}
-		
+
 		msg, err := wsserver.ParseMessage(message)
 		if err != nil {
 			continue
@@ -68,7 +68,7 @@ func (r *V1) roomWebSocket(c *echo.Context) error {
 				continue
 			}
 			messageID := uuid.New().String()
-			r.amqpPublisher.Publish("message.created", map[string]string{
+			r.mqPublisher.Publish("message.created", map[string]string{
 				"message_id": messageID,
 				"room_id":    roomID,
 				"user_id":    req.UserID,
@@ -87,7 +87,7 @@ func (r *V1) roomWebSocket(c *echo.Context) error {
 				conn.WriteMessage(websocket.TextMessage, []byte("invalid request"))
 				continue
 			}
-			r.amqpPublisher.Publish("message.deleted", map[string]string{
+			r.mqPublisher.Publish("message.deleted", map[string]string{
 				"room_id":    roomID,
 				"message_id": req.MessageID,
 			})

@@ -8,7 +8,7 @@ import (
 	"github.com/labstack/echo/v5"
 )
 
-func NewRouter(e *echo.Echo, wsServer *wsserver.Server, amqpPublisher *rabbitmq.Publisher, l logger.Interface, jwtMiddleware echo.MiddlewareFunc) {
+func NewRouter(e *echo.Echo, wsServer *wsserver.Server, mqPublisher rabbitmq.Publisher, l logger.Interface, jwtMiddleware echo.MiddlewareFunc) {
 	apiPrivateGroup := e.Group("/v1", jwtMiddleware)
-	v1.NewWsRoutes(apiPrivateGroup, wsServer, amqpPublisher, l)
+	v1.NewWsRoutes(apiPrivateGroup, wsServer, mqPublisher, l)
 }

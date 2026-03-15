@@ -77,9 +77,9 @@ func Run(cfg *config.Config) {
 	authGrpcClient := authPb.NewAuthServiceClient(grpcClientConn)
 
 	// RabbitMQ Publisher
-	rmqPublisher, err := rabbitmq.NewPublisher(cfg.RMQ.URL, "app.fanout")
+	rmqPublisher, err := rabbitmq.NewRabbitMQPublisher(cfg.RMQ.URL, "app.fanout")
 	if err != nil {
-		l.Fatal(fmt.Errorf("app - Run - rabbitmq.NewPublisher: %w", err))
+		l.Fatal(fmt.Errorf("app - Run - rabbitmq.NewRabbitMQPublisher: %w", err))
 	}
 	defer rmqPublisher.Close()
 

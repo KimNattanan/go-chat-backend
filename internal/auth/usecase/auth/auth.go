@@ -16,22 +16,22 @@ import (
 )
 
 type UseCase struct {
-	userRepo      repo.UserRepo
-	sessionRepo   repo.SessionRepo
-	amqpPublisher *rabbitmq.Publisher
-	jwtMaker      *token.JWTMaker
-	accessTTL     time.Duration
-	refreshTTL    time.Duration
+	userRepo    repo.UserRepo
+	sessionRepo repo.SessionRepo
+	mqPublisher rabbitmq.Publisher
+	jwtMaker    *token.JWTMaker
+	accessTTL   time.Duration
+	refreshTTL  time.Duration
 }
 
-func New(userRepo repo.UserRepo, sessionRepo repo.SessionRepo, amqpPublisher *rabbitmq.Publisher, jwtMaker *token.JWTMaker, accessTTL, refreshTTL int) *UseCase {
+func New(userRepo repo.UserRepo, sessionRepo repo.SessionRepo, mqPublisher rabbitmq.Publisher, jwtMaker *token.JWTMaker, accessTTL, refreshTTL int) *UseCase {
 	return &UseCase{
-		userRepo:      userRepo,
-		sessionRepo:   sessionRepo,
-		amqpPublisher: amqpPublisher,
-		jwtMaker:      jwtMaker,
-		accessTTL:     time.Duration(accessTTL) * time.Second,
-		refreshTTL:    time.Duration(refreshTTL) * time.Second,
+		userRepo:    userRepo,
+		sessionRepo: sessionRepo,
+		mqPublisher: mqPublisher,
+		jwtMaker:    jwtMaker,
+		accessTTL:   time.Duration(accessTTL) * time.Second,
+		refreshTTL:  time.Duration(refreshTTL) * time.Second,
 	}
 }
 
@@ -44,10 +44,10 @@ func (u *UseCase) FindUserByEmail(ctx context.Context, email string) (*entity.Us
 }
 
 func (u *UseCase) DeleteUser(ctx context.Context, id string) error {
-	if err := u.amqpPublisher.Publish("user.deleted", map[string]string{
+	if err := u.mqPublisher.Publish("user.deleted", map[string]string{
 		"user_id": id,
 	}); err != nil {
-		return fmt.Errorf("AuthUseCase - DeleteUser - u.amqpPublisher.Publish: %w", err)
+		return fmt.Errorf("AuthUseCase - DeleteUser - u.mqPublisher.Publish: %w", err)
 	}
 	return u.userRepo.Delete(ctx, id)
 }
@@ -127,7 +127,7 @@ func (u *UseCase) Register(ctx context.Context, email, password, name string) (*
 		return nil, "", nil, "", nil, fmt.Errorf("AuthUseCase - Register - u.userRepo.Create: %w", err)
 	}
 
-	if err := u.amqpPublisher.Publish("user.created", map[string]string{
+	if err := u.mqPublisher.Publish("user.created", map[string]string{
 		"user_id": user.ID.String(),
 		"email":   user.Email,
 		"name":    name,

@@ -9,8 +9,8 @@ import (
 
 // V1 -.
 type V1 struct {
-	wsServer      *wsserver.Server
-	amqpPublisher *rabbitmq.Publisher
+	wsServer    *wsserver.Server
+	mqPublisher rabbitmq.Publisher
 
 	l logger.Interface
 	v *validator.Validate
