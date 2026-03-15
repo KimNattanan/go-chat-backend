@@ -12,7 +12,8 @@ Chat backend implemented in Go, following a modular monolith architecture with s
 - **RabbitMQ** integration for asynchronous messaging
 - **PostgreSQL** for persistent data
 - **Redis** for refresh token and session management
-- Logging and recovery middlewares
+- **Rate Limiter** implementing Token Bucket algorithm
+- **Logging and Recovery** middlewares
 - Centralized error mapping and handling
 
 ## Prerequisites
@@ -37,7 +38,7 @@ Chat backend implemented in Go, following a modular monolith architecture with s
 
 3. Configure environment variables
 
-    Copy `.env.example`, rename it to `.env`, then configure it.
+    Copy `.env.example` to `.env` and set the required variables (see `.env.example` for keys).
 
 4. Start the databases using Docker Compose:
 
@@ -45,7 +46,7 @@ Chat backend implemented in Go, following a modular monolith architecture with s
     docker-compose up -d
     ```
 
-5. Run the application:
+5. Run the application (database migrations run automatically on startup):
 
     ```sh
     go run ./cmd/app
@@ -58,44 +59,36 @@ Chat backend implemented in Go, following a modular monolith architecture with s
 ├── cmd/app/main.go
 ├── internal
 │   ├── app/
-│   ├── auth
-│   │   ├── entity/
-│   │   ├── handler/
-│   │   ├── proto/
-│   │   ├── repo/
-│   │   └── usecase/
-│   ├── profile
+│   ├── auth/
+│   ├── profile/
+│   ├── chat/
 │   │   ├── entity/
 │   │   ├── handler/
 │   │   │   ├── amqp_rpc/
 │   │   │   ├── grpc/
 │   │   │   └── rest/
+│   │   │       ├── v1/
+│   │   │       └── router.go
 │   │   ├── proto/
-│   │   ├── repo
+│   │   ├── repo/
 │   │   │   ├── persistent/
 │   │   │   └── contracts.go
 │   │   └── usecase/
-│   │       ├── profile/
+│   │       ├── membership/
+│   │       ├── room/
 │   │       └── contracts.go
-│   ├── chat
-│   │   ├── entity/
-│   │   ├── handler/
-│   │   ├── proto/
-│   │   ├── repo/
-│   │   └── usecase/
-│   ├── message
-│   │   ├── entity/
-│   │   ├── handler/
-│   │   ├── proto/
-│   │   ├── repo/
-│   │   └── usecase/
-│   ├── platform
-│   │   ├── config/
-│   │   └── middleware
-│   │       ├── jwt.go
-│   │       ├── logger.go
-│   │       └── recovery.go
-|   └── realtime/
+│   ├── message/
+│   ├── realtime/
+│   │   └── handler/
+│   │       ├── amqp_rpc/
+│   │       └── ws/
+|   └── platform/
+│       ├── config/
+│       ├── middleware
+│       │   ├── jwt.go
+│       │   ├── logger.go
+│       │   └── recovery.go
+│       └── wsserver/
 ├── pkg
 │   ├── apperror/
 │   ├── grpcserver/
@@ -103,14 +96,15 @@ Chat backend implemented in Go, following a modular monolith architecture with s
 │   ├── logger/
 │   ├── postgres/
 │   ├── rabbitmq/
+│   ├── ratelimit/
 │   ├── redisclient/
 │   ├── responses/
 │   └── token/
-│── .env.example
-│── .gitignore
-│── docker-compose.yml
-│── go.mod
-│── LICENSE
+├── .env.example
+├── .gitignore
+├── docker-compose.yml
+├── go.mod
+├── LICENSE
 └── README.md
 ```
 
