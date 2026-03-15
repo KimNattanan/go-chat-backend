@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	authGrpc "github.com/KimNattanan/go-chat-backend/internal/auth/handler/grpc"
 	authRest "github.com/KimNattanan/go-chat-backend/internal/auth/handler/rest"
@@ -44,6 +45,7 @@ import (
 	"github.com/KimNattanan/go-chat-backend/pkg/logger"
 	"github.com/KimNattanan/go-chat-backend/pkg/postgres"
 	"github.com/KimNattanan/go-chat-backend/pkg/rabbitmq"
+	"github.com/KimNattanan/go-chat-backend/pkg/ratelimit"
 	"github.com/KimNattanan/go-chat-backend/pkg/redisclient"
 	"github.com/KimNattanan/go-chat-backend/pkg/token"
 	echoMiddleware "github.com/labstack/echo/v5/middleware"
@@ -143,6 +145,9 @@ func Run(cfg *config.Config) {
 	reflection.Register(grpcServer.App)
 
 	// Middleware
+	ratelimitMiddleware := ratelimit.RateLimitMiddleware(
+		ratelimit.NewRateLimiter(100, 10, 10*time.Minute),
+	)
 	jwtMiddleware := middleware.JWTMiddleware(l, cfg, jwtMaker, authGrpcClient)
 
 	// HTTP Server
@@ -153,6 +158,7 @@ func Run(cfg *config.Config) {
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowCredentials: true,
 	}))
+	httpServer.Echo.Use(ratelimitMiddleware)
 	httpServer.Echo.Use(middleware.Logger(l))
 	httpServer.Echo.Use(middleware.Recovery(l))
 	authRest.NewRouter(httpServer.Echo, cfg, authUseCase, l, jwtMiddleware)
