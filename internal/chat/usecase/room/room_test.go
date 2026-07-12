@@ -11,11 +11,11 @@ import (
 )
 
 type mockRoomRepo struct {
-	createFunc    func(ctx context.Context, room *entity.Room) error
-	findByIDFunc  func(ctx context.Context, id string) (*entity.Room, error)
-	findByUserID  func(ctx context.Context, userID string) ([]*entity.Room, error)
-	patchFunc     func(ctx context.Context, id string, room *entity.Room) error
-	deleteFunc    func(ctx context.Context, id string) error
+	createFunc   func(ctx context.Context, room *entity.Room) error
+	findByIDFunc func(ctx context.Context, id string) (*entity.Room, error)
+	findByUserID func(ctx context.Context, userID string) ([]*entity.Room, error)
+	patchFunc    func(ctx context.Context, id string, room *entity.Room) error
+	deleteFunc   func(ctx context.Context, id string) error
 }
 
 func (m *mockRoomRepo) Create(ctx context.Context, room *entity.Room) error {

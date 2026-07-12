@@ -16,8 +16,7 @@ func (r *V1) findProfile(c *echo.Context) error {
 
 	profile, err := r.profileUseCase.FindByUserID(ctx, userID)
 	if err != nil {
-		r.l.Error(err, "rest - v1 - findProfile")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - findProfile")
 	}
 
 	return c.JSON(http.StatusOK, toProfileResponse(profile))
@@ -29,8 +28,7 @@ func (r *V1) getProfile(c *echo.Context) error {
 
 	profile, err := r.profileUseCase.FindByUserID(ctx, userID)
 	if err != nil {
-		r.l.Error(err, "rest - v1 - getProfile")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - getProfile")
 	}
 
 	return c.JSON(http.StatusOK, toProfileResponse(profile))
@@ -42,18 +40,15 @@ func (r *V1) createProfile(c *echo.Context) error {
 	userIDStr := c.Get("userID").(string)
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		r.l.Error(err, "rest - v1 - createProfile")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - createProfile")
 	}
 
 	var req request.CreateProfileRequest
 	if err := c.Bind(&req); err != nil {
-		r.l.Error(err, "rest - v1 - createProfile")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - createProfile")
 	}
 	if err := r.v.Struct(&req); err != nil {
-		r.l.Error(err, "rest - v1 - createProfile")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - createProfile")
 	}
 
 	profile := &entity.Profile{
@@ -62,8 +57,7 @@ func (r *V1) createProfile(c *echo.Context) error {
 		Name:   req.Name,
 	}
 	if err := r.profileUseCase.Create(ctx, profile); err != nil {
-		r.l.Error(err, "rest - v1 - createProfile")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - createProfile")
 	}
 
 	return c.JSON(http.StatusCreated, toProfileResponse(profile))
@@ -75,12 +69,10 @@ func (r *V1) patchProfile(c *echo.Context) error {
 
 	var req request.PatchProfileRequest
 	if err := c.Bind(&req); err != nil {
-		r.l.Error(err, "rest - v1 - patchProfile")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - patchProfile")
 	}
 	if err := r.v.Struct(&req); err != nil {
-		r.l.Error(err, "rest - v1 - patchProfile")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - patchProfile")
 	}
 
 	profile := &entity.Profile{
@@ -88,8 +80,7 @@ func (r *V1) patchProfile(c *echo.Context) error {
 	}
 	updatedProfile, err := r.profileUseCase.Patch(ctx, userID, profile)
 	if err != nil {
-		r.l.Error(err, "rest - v1 - patchProfile")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - patchProfile")
 	}
 
 	return c.JSON(http.StatusOK, toProfileResponse(updatedProfile))
@@ -100,8 +91,7 @@ func (r *V1) deleteProfile(c *echo.Context) error {
 	userID := c.Get("userID").(string)
 
 	if err := r.profileUseCase.Delete(ctx, userID); err != nil {
-		r.l.Error(err, "rest - v1 - deleteProfile")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - deleteProfile")
 	}
 
 	return responses.MessageResponse(c, http.StatusOK, "profile deleted")

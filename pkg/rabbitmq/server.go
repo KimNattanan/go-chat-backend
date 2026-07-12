@@ -1,9 +1,9 @@
 package rabbitmq
 
 import (
-	"maps"
 	"context"
 	"errors"
+	"maps"
 	"sync"
 	"time"
 
@@ -294,13 +294,15 @@ func (s *Server) worker(
 
 			msg, err := ParseMessage(d.Body)
 			if err != nil {
-				d.Nack(false, false)
+				s.logger.Warn(err, "rabbitmq - worker - parse message")
+				_ = d.Nack(false, false)
 				continue
 			}
 
 			handler, ok := router[msg.Type]
 			if !ok {
-				d.Nack(false, false)
+				s.logger.Warn("rabbitmq - worker - unknown message type: " + msg.Type)
+				_ = d.Nack(false, false)
 				continue
 			}
 

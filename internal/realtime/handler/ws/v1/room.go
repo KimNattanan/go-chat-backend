@@ -23,13 +23,12 @@ func (r *V1) roomWebSocket(c *echo.Context) error {
 
 	conn, err := r.wsServer.Upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
-		r.l.Error(err, "v1 - roomWebSocket")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "v1 - roomWebSocket")
 	}
 	r.wsServer.Register(roomID, conn)
 	defer func() {
 		r.wsServer.Unregister(roomID, conn)
-		conn.Close()
+		_ = conn.Close()
 	}()
 
 	conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -41,6 +40,9 @@ func (r *V1) roomWebSocket(c *echo.Context) error {
 	for {
 		messageType, message, err := conn.ReadMessage()
 		if err != nil {
+			if !websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
+				r.l.Warn(err, "v1 - roomWebSocket - ReadMessage")
+			}
 			break
 		}
 		conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -52,49 +54,64 @@ func (r *V1) roomWebSocket(c *echo.Context) error {
 
 		msg, err := wsserver.ParseMessage(message)
 		if err != nil {
+			r.l.Warn(err, "v1 - roomWebSocket - ParseMessage")
 			continue
 		}
 		switch msg.Type {
 		case "create_message":
 			var req request.CreateMessageRequest
 			if err := json.Unmarshal(msg.Data, &req); err != nil {
-				r.l.Error(err, "v1 - roomWebSocket")
-				conn.WriteMessage(websocket.TextMessage, []byte("invalid request"))
+				r.l.Warn(err, "v1 - roomWebSocket")
+				if werr := conn.WriteMessage(websocket.TextMessage, []byte("invalid request")); werr != nil {
+					r.l.Error(werr, "v1 - roomWebSocket - WriteMessage")
+				}
 				continue
 			}
 			if err := r.v.Struct(&req); err != nil {
-				r.l.Error(err, "v1 - roomWebSocket")
-				conn.WriteMessage(websocket.TextMessage, []byte("invalid request"))
+				r.l.Warn(err, "v1 - roomWebSocket")
+				if werr := conn.WriteMessage(websocket.TextMessage, []byte("invalid request")); werr != nil {
+					r.l.Error(werr, "v1 - roomWebSocket - WriteMessage")
+				}
 				continue
 			}
 			messageID := uuid.New().String()
-			r.mqPublisher.Publish("message.created", map[string]string{
+			if err := r.mqPublisher.Publish("message.created", map[string]string{
 				"message_id": messageID,
 				"room_id":    roomID,
 				"user_id":    req.UserID,
 				"content":    req.Content,
-			})
+			}); err != nil {
+				r.l.Error(err, "v1 - roomWebSocket - Publish create_message")
+			}
 
 		case "delete_message":
 			var req request.DeleteMessageRequest
 			if err := json.Unmarshal(msg.Data, &req); err != nil {
-				r.l.Error(err, "v1 - roomWebSocket")
-				conn.WriteMessage(websocket.TextMessage, []byte("invalid request"))
+				r.l.Warn(err, "v1 - roomWebSocket")
+				if werr := conn.WriteMessage(websocket.TextMessage, []byte("invalid request")); werr != nil {
+					r.l.Error(werr, "v1 - roomWebSocket - WriteMessage")
+				}
 				continue
 			}
 			if err := r.v.Struct(&req); err != nil {
-				r.l.Error(err, "v1 - roomWebSocket")
-				conn.WriteMessage(websocket.TextMessage, []byte("invalid request"))
+				r.l.Warn(err, "v1 - roomWebSocket")
+				if werr := conn.WriteMessage(websocket.TextMessage, []byte("invalid request")); werr != nil {
+					r.l.Error(werr, "v1 - roomWebSocket - WriteMessage")
+				}
 				continue
 			}
-			r.mqPublisher.Publish("message.deleted", map[string]string{
+			if err := r.mqPublisher.Publish("message.deleted", map[string]string{
 				"room_id":    roomID,
 				"message_id": req.MessageID,
-			})
+			}); err != nil {
+				r.l.Error(err, "v1 - roomWebSocket - Publish delete_message")
+			}
 
 		default:
-			r.l.Error(errors.New("invalid message type"), "v1 - roomWebSocket")
-			conn.WriteMessage(websocket.TextMessage, []byte("invalid message type"))
+			r.l.Warn(errors.New("invalid message type"), "v1 - roomWebSocket")
+			if werr := conn.WriteMessage(websocket.TextMessage, []byte("invalid message type")); werr != nil {
+				r.l.Error(werr, "v1 - roomWebSocket - WriteMessage")
+			}
 			continue
 		}
 	}

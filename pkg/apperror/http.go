@@ -9,8 +9,9 @@ import (
 )
 
 type ErrorResponse struct {
-	Message string      `json:"message"`
-	Errors  interface{} `json:"errors,omitempty"`
+	Message string            `json:"message"`
+	Code    string            `json:"code,omitempty"`
+	Errors  map[string]string `json:"errors,omitempty"`
 }
 
 func ParseHttp(err error) (int, ErrorResponse) {
@@ -23,6 +24,7 @@ func ParseHttp(err error) (int, ErrorResponse) {
 	if errors.As(err, &appErr) {
 		return appErr.Code, ErrorResponse{
 			Message: appErr.Message,
+			Code:    CodeFromHTTPStatus(appErr.Code),
 		}
 	}
 
@@ -31,22 +33,30 @@ func ParseHttp(err error) (int, ErrorResponse) {
 	if errors.As(err, &validationErrs) {
 		return http.StatusBadRequest, ErrorResponse{
 			Message: "validation failed",
+			Code:    CodeValidationFailed,
 			Errors:  httpAppError.ParseValidationErrors(validationErrs),
 		}
 	}
 
 	// GORM Errors
 	if code, msg, ok := httpAppError.ParseGormError(err); ok {
-		return code, ErrorResponse{Message: msg}
+		return code, ErrorResponse{
+			Message: msg,
+			Code:    CodeFromHTTPStatus(code),
+		}
 	}
 
 	// Redis Errors
 	if code, msg, ok := httpAppError.ParseRedisError(err); ok {
-		return code, ErrorResponse{Message: msg}
+		return code, ErrorResponse{
+			Message: msg,
+			Code:    CodeFromHTTPStatus(code),
+		}
 	}
 
 	// Default fallback
 	return http.StatusInternalServerError, ErrorResponse{
 		Message: "internal server error",
+		Code:    CodeInternal,
 	}
 }

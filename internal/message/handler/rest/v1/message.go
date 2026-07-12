@@ -16,8 +16,7 @@ func (r *V1) findMessageByID(c *echo.Context) error {
 
 	message, err := r.messageUseCase.FindByID(ctx, id)
 	if err != nil {
-		r.l.Error(err, "rest - v1 - findMessageByID")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - findMessageByID")
 	}
 
 	return c.JSON(http.StatusOK, toMessageResponse(message))
@@ -29,8 +28,7 @@ func (r *V1) findMessagesByRoomID(c *echo.Context) error {
 
 	messages, err := r.messageUseCase.FindByRoomID(ctx, roomID)
 	if err != nil {
-		r.l.Error(err, "rest - v1 - findMessageByRoomID")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - findMessageByRoomID")
 	}
 
 	return c.JSON(http.StatusOK, toMessageResponseList(messages))
@@ -42,8 +40,7 @@ func (r *V1) findMessagesByUserID(c *echo.Context) error {
 
 	messages, err := r.messageUseCase.FindByUserID(ctx, userID)
 	if err != nil {
-		r.l.Error(err, "rest - v1 - findMessageByUserID")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - findMessageByUserID")
 	}
 
 	return c.JSON(http.StatusOK, toMessageResponseList(messages))
@@ -56,8 +53,7 @@ func (r *V1) findMessagesByRoomIDAndUserID(c *echo.Context) error {
 
 	messages, err := r.messageUseCase.FindByRoomIDAndUserID(ctx, roomID, userID)
 	if err != nil {
-		r.l.Error(err, "rest - v1 - findMessageByRoomIDAndUserID")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - findMessageByRoomIDAndUserID")
 	}
 
 	return c.JSON(http.StatusOK, toMessageResponseList(messages))
@@ -69,25 +65,21 @@ func (r *V1) createMessage(c *echo.Context) error {
 	roomIDStr := c.Param("roomID")
 	roomID, err := uuid.Parse(roomIDStr)
 	if err != nil {
-		r.l.Error(err, "rest - v1 - createMessage")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - createMessage")
 	}
 
 	userIDStr := c.Get("userID").(string)
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		r.l.Error(err, "rest - v1 - createMessage")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - createMessage")
 	}
 
 	var req request.CreateMessageRequest
 	if err := c.Bind(&req); err != nil {
-		r.l.Error(err, "rest - v1 - createMessage")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - createMessage")
 	}
 	if err := r.v.Struct(&req); err != nil {
-		r.l.Error(err, "rest - v1 - createMessage")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - createMessage")
 	}
 
 	message := &entity.Message{
@@ -96,8 +88,7 @@ func (r *V1) createMessage(c *echo.Context) error {
 		Content: req.Content,
 	}
 	if err := r.messageUseCase.Create(ctx, message); err != nil {
-		r.l.Error(err, "rest - v1 - createMessage")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - createMessage")
 	}
 
 	return c.JSON(http.StatusCreated, toMessageResponse(message))
@@ -108,8 +99,7 @@ func (r *V1) deleteMessage(c *echo.Context) error {
 	id := c.Param("id")
 
 	if err := r.messageUseCase.Delete(ctx, id); err != nil {
-		r.l.Error(err, "rest - v1 - deleteMessage")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - deleteMessage")
 	}
 
 	return responses.MessageResponse(c, http.StatusOK, "message deleted")
@@ -120,8 +110,7 @@ func (r *V1) deleteMessagesByRoomID(c *echo.Context) error {
 	roomID := c.Param("roomID")
 
 	if err := r.messageUseCase.DeleteByRoomID(ctx, roomID); err != nil {
-		r.l.Error(err, "rest - v1 - deleteMessageByRoomID")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - deleteMessageByRoomID")
 	}
 
 	return responses.MessageResponse(c, http.StatusOK, "messages deleted")
@@ -132,8 +121,7 @@ func (r *V1) anonymizeUserMessages(c *echo.Context) error {
 	userID := c.Param("userID")
 
 	if err := r.messageUseCase.AnonymizeUserMessages(ctx, userID); err != nil {
-		r.l.Error(err, "rest - v1 - anonymizeUserMessages")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - anonymizeUserMessages")
 	}
 
 	return responses.MessageResponse(c, http.StatusOK, "messages anonymized")

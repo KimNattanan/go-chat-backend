@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"time"
 
 	"github.com/KimNattanan/go-chat-backend/internal/auth/entity"
 )
@@ -18,6 +19,12 @@ type (
 		FindByID(ctx context.Context, id string) (*entity.Session, error)
 		FindByUserID(ctx context.Context, userID string) ([]*entity.Session, error)
 		Revoke(ctx context.Context, id string) error
+		RevokeAllByUserID(ctx context.Context, userID string) error
 		Delete(ctx context.Context, id string) error
+
+		AcquireRefreshLock(ctx context.Context, sessionID string, ttl time.Duration) (bool, error)
+		ReleaseRefreshLock(ctx context.Context, sessionID string) error
+		SaveRefreshGrace(ctx context.Context, oldSessionID string, grace *entity.RefreshGrace, ttl time.Duration) error
+		FindRefreshGrace(ctx context.Context, oldSessionID string) (*entity.RefreshGrace, error)
 	}
 )

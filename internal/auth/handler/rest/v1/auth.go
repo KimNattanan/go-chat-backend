@@ -25,24 +25,21 @@ func (r *V1) login(c *echo.Context) error {
 
 	var req request.LoginRequest
 	if err := c.Bind(&req); err != nil {
-		r.l.Error(err, "rest - v1 - login")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - login")
 	}
 	if err := r.v.Struct(&req); err != nil {
-		r.l.Error(err, "rest - v1 - login")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - login")
 	}
 
-	_, accessToken, accessClaims, refreshToken, refreshClaims, err := r.authUseCase.Login(ctx, req.Email, req.Password)
+	result, err := r.authUseCase.Login(ctx, req.Email, req.Password)
 	if err != nil {
-		r.l.Error(err, "rest - v1 - login")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - login")
 	}
 
 	c.SetCookie(&http.Cookie{
 		Name:     "access-token",
-		Value:    accessToken,
-		Expires:  accessClaims.ExpiresAt.Time,
+		Value:    result.AccessToken,
+		Expires:  result.AccessClaims.ExpiresAt.Time,
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   r.appEnv == "production",
@@ -50,8 +47,8 @@ func (r *V1) login(c *echo.Context) error {
 	})
 	c.SetCookie(&http.Cookie{
 		Name:     "refresh-token",
-		Value:    refreshToken,
-		Expires:  refreshClaims.ExpiresAt.Time,
+		Value:    result.RefreshToken,
+		Expires:  result.RefreshClaims.ExpiresAt.Time,
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   r.appEnv == "production",
@@ -66,24 +63,21 @@ func (r *V1) register(c *echo.Context) error {
 
 	var req request.RegisterRequest
 	if err := c.Bind(&req); err != nil {
-		r.l.Error(err, "rest - v1 - register")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - register")
 	}
 	if err := r.v.Struct(&req); err != nil {
-		r.l.Error(err, "rest - v1 - register")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - register")
 	}
 
-	_, accessToken, accessClaims, refreshToken, refreshClaims, err := r.authUseCase.Register(ctx, req.Email, req.Password, req.Name)
+	result, err := r.authUseCase.Register(ctx, req.Email, req.Password, req.Name)
 	if err != nil {
-		r.l.Error(err, "rest - v1 - register")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - register")
 	}
 
 	c.SetCookie(&http.Cookie{
 		Name:     "access-token",
-		Value:    accessToken,
-		Expires:  accessClaims.ExpiresAt.Time,
+		Value:    result.AccessToken,
+		Expires:  result.AccessClaims.ExpiresAt.Time,
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   r.appEnv == "production",
@@ -91,8 +85,8 @@ func (r *V1) register(c *echo.Context) error {
 	})
 	c.SetCookie(&http.Cookie{
 		Name:     "refresh-token",
-		Value:    refreshToken,
-		Expires:  refreshClaims.ExpiresAt.Time,
+		Value:    result.RefreshToken,
+		Expires:  result.RefreshClaims.ExpiresAt.Time,
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   r.appEnv == "production",
@@ -107,13 +101,11 @@ func (r *V1) logout(c *echo.Context) error {
 
 	refreshToken, err := readCookie(c, "refresh-token")
 	if err != nil {
-		r.l.Error(err, "rest - v1 - logout")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - logout")
 	}
 
 	if err := r.authUseCase.Logout(ctx, refreshToken); err != nil {
-		r.l.Error(err, "rest - v1 - logout")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - logout")
 	}
 
 	c.SetCookie(&http.Cookie{
@@ -138,51 +130,13 @@ func (r *V1) logout(c *echo.Context) error {
 	return responses.MessageResponse(c, http.StatusOK, "logged out successfully")
 }
 
-func (r *V1) refreshToken(c *echo.Context) error {
-	ctx := c.Request().Context()
-	oldRefreshToken, err := readCookie(c, "refresh-token")
-	if err != nil {
-		r.l.Error(err, "rest - v1 - refreshToken")
-		return responses.ErrorResponse(c, err)
-	}
-	userID := c.Get("userID").(string)
-
-	_, accessToken, accessClaims, refreshToken, refreshClaims, err := r.authUseCase.RefreshToken(ctx, userID, oldRefreshToken)
-	if err != nil {
-		r.l.Error(err, "rest - v1 - login")
-		return responses.ErrorResponse(c, err)
-	}
-
-	c.SetCookie(&http.Cookie{
-		Name:     "access-token",
-		Value:    accessToken,
-		Expires:  accessClaims.ExpiresAt.Time,
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   r.appEnv == "production",
-		SameSite: http.SameSiteLaxMode,
-	})
-	c.SetCookie(&http.Cookie{
-		Name:     "refresh-token",
-		Value:    refreshToken,
-		Expires:  refreshClaims.ExpiresAt.Time,
-		Path:     "/",
-		HttpOnly: true,
-		Secure:   r.appEnv == "production",
-		SameSite: http.SameSiteLaxMode,
-	})
-
-	return responses.MessageResponse(c, http.StatusOK, "refreshed token successfully")
-}
-
 func (r *V1) getUser(c *echo.Context) error {
 	ctx := c.Request().Context()
 	id := c.Get("userID").(string)
 
 	user, err := r.authUseCase.FindUserByID(ctx, id)
 	if err != nil {
-		r.l.Error(err, "rest - v1 - getUser")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - getUser")
 	}
 
 	return c.JSON(http.StatusOK, toUserResponse(user))
@@ -194,8 +148,7 @@ func (r *V1) findUserByID(c *echo.Context) error {
 
 	user, err := r.authUseCase.FindUserByID(ctx, id)
 	if err != nil {
-		r.l.Error(err, "rest - v1 - findUserByID")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - findUserByID")
 	}
 
 	return c.JSON(http.StatusOK, toUserResponse(user))
@@ -207,8 +160,7 @@ func (r *V1) findUserByEmail(c *echo.Context) error {
 
 	user, err := r.authUseCase.FindUserByEmail(ctx, email)
 	if err != nil {
-		r.l.Error(err, "rest - v1 - findUserByEmail")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - findUserByEmail")
 	}
 
 	return c.JSON(http.StatusOK, toUserResponse(user))
@@ -219,8 +171,7 @@ func (r *V1) deleteUser(c *echo.Context) error {
 	id := c.Get("userID").(string)
 
 	if err := r.authUseCase.DeleteUser(ctx, id); err != nil {
-		r.l.Error(err, "rest - v1 - deleteUser")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - deleteUser")
 	}
 
 	return responses.MessageResponse(c, http.StatusOK, "user deleted")

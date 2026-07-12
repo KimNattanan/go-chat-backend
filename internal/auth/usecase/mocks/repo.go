@@ -6,6 +6,7 @@ package mocks
 
 import (
 	"context"
+	"time"
 
 	"github.com/KimNattanan/go-chat-backend/internal/auth/entity"
 	mock "github.com/stretchr/testify/mock"
@@ -315,6 +316,78 @@ func (_m *MockSessionRepo) EXPECT() *MockSessionRepo_Expecter {
 	return &MockSessionRepo_Expecter{mock: &_m.Mock}
 }
 
+// AcquireRefreshLock provides a mock function for the type MockSessionRepo
+func (_mock *MockSessionRepo) AcquireRefreshLock(ctx context.Context, sessionID string, ttl time.Duration) (bool, error) {
+	ret := _mock.Called(ctx, sessionID, ttl)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AcquireRefreshLock")
+	}
+
+	var r0 bool
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, time.Duration) (bool, error)); ok {
+		return returnFunc(ctx, sessionID, ttl)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, time.Duration) bool); ok {
+		r0 = returnFunc(ctx, sessionID, ttl)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, time.Duration) error); ok {
+		r1 = returnFunc(ctx, sessionID, ttl)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockSessionRepo_AcquireRefreshLock_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AcquireRefreshLock'
+type MockSessionRepo_AcquireRefreshLock_Call struct {
+	*mock.Call
+}
+
+// AcquireRefreshLock is a helper method to define mock.On call
+//   - ctx context.Context
+//   - sessionID string
+//   - ttl time.Duration
+func (_e *MockSessionRepo_Expecter) AcquireRefreshLock(ctx interface{}, sessionID interface{}, ttl interface{}) *MockSessionRepo_AcquireRefreshLock_Call {
+	return &MockSessionRepo_AcquireRefreshLock_Call{Call: _e.mock.On("AcquireRefreshLock", ctx, sessionID, ttl)}
+}
+
+func (_c *MockSessionRepo_AcquireRefreshLock_Call) Run(run func(ctx context.Context, sessionID string, ttl time.Duration)) *MockSessionRepo_AcquireRefreshLock_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 time.Duration
+		if args[2] != nil {
+			arg2 = args[2].(time.Duration)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockSessionRepo_AcquireRefreshLock_Call) Return(b bool, err error) *MockSessionRepo_AcquireRefreshLock_Call {
+	_c.Call.Return(b, err)
+	return _c
+}
+
+func (_c *MockSessionRepo_AcquireRefreshLock_Call) RunAndReturn(run func(ctx context.Context, sessionID string, ttl time.Duration) (bool, error)) *MockSessionRepo_AcquireRefreshLock_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Create provides a mock function for the type MockSessionRepo
 func (_mock *MockSessionRepo) Create(ctx context.Context, session *entity.Session) error {
 	ret := _mock.Called(ctx, session)
@@ -565,6 +638,131 @@ func (_c *MockSessionRepo_FindByUserID_Call) RunAndReturn(run func(ctx context.C
 	return _c
 }
 
+// FindRefreshGrace provides a mock function for the type MockSessionRepo
+func (_mock *MockSessionRepo) FindRefreshGrace(ctx context.Context, oldSessionID string) (*entity.RefreshGrace, error) {
+	ret := _mock.Called(ctx, oldSessionID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindRefreshGrace")
+	}
+
+	var r0 *entity.RefreshGrace
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*entity.RefreshGrace, error)); ok {
+		return returnFunc(ctx, oldSessionID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *entity.RefreshGrace); ok {
+		r0 = returnFunc(ctx, oldSessionID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entity.RefreshGrace)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, oldSessionID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockSessionRepo_FindRefreshGrace_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindRefreshGrace'
+type MockSessionRepo_FindRefreshGrace_Call struct {
+	*mock.Call
+}
+
+// FindRefreshGrace is a helper method to define mock.On call
+//   - ctx context.Context
+//   - oldSessionID string
+func (_e *MockSessionRepo_Expecter) FindRefreshGrace(ctx interface{}, oldSessionID interface{}) *MockSessionRepo_FindRefreshGrace_Call {
+	return &MockSessionRepo_FindRefreshGrace_Call{Call: _e.mock.On("FindRefreshGrace", ctx, oldSessionID)}
+}
+
+func (_c *MockSessionRepo_FindRefreshGrace_Call) Run(run func(ctx context.Context, oldSessionID string)) *MockSessionRepo_FindRefreshGrace_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockSessionRepo_FindRefreshGrace_Call) Return(refreshGrace *entity.RefreshGrace, err error) *MockSessionRepo_FindRefreshGrace_Call {
+	_c.Call.Return(refreshGrace, err)
+	return _c
+}
+
+func (_c *MockSessionRepo_FindRefreshGrace_Call) RunAndReturn(run func(ctx context.Context, oldSessionID string) (*entity.RefreshGrace, error)) *MockSessionRepo_FindRefreshGrace_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ReleaseRefreshLock provides a mock function for the type MockSessionRepo
+func (_mock *MockSessionRepo) ReleaseRefreshLock(ctx context.Context, sessionID string) error {
+	ret := _mock.Called(ctx, sessionID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReleaseRefreshLock")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, sessionID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockSessionRepo_ReleaseRefreshLock_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReleaseRefreshLock'
+type MockSessionRepo_ReleaseRefreshLock_Call struct {
+	*mock.Call
+}
+
+// ReleaseRefreshLock is a helper method to define mock.On call
+//   - ctx context.Context
+//   - sessionID string
+func (_e *MockSessionRepo_Expecter) ReleaseRefreshLock(ctx interface{}, sessionID interface{}) *MockSessionRepo_ReleaseRefreshLock_Call {
+	return &MockSessionRepo_ReleaseRefreshLock_Call{Call: _e.mock.On("ReleaseRefreshLock", ctx, sessionID)}
+}
+
+func (_c *MockSessionRepo_ReleaseRefreshLock_Call) Run(run func(ctx context.Context, sessionID string)) *MockSessionRepo_ReleaseRefreshLock_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockSessionRepo_ReleaseRefreshLock_Call) Return(err error) *MockSessionRepo_ReleaseRefreshLock_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockSessionRepo_ReleaseRefreshLock_Call) RunAndReturn(run func(ctx context.Context, sessionID string) error) *MockSessionRepo_ReleaseRefreshLock_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Revoke provides a mock function for the type MockSessionRepo
 func (_mock *MockSessionRepo) Revoke(ctx context.Context, id string) error {
 	ret := _mock.Called(ctx, id)
@@ -618,6 +816,132 @@ func (_c *MockSessionRepo_Revoke_Call) Return(err error) *MockSessionRepo_Revoke
 }
 
 func (_c *MockSessionRepo_Revoke_Call) RunAndReturn(run func(ctx context.Context, id string) error) *MockSessionRepo_Revoke_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RevokeAllByUserID provides a mock function for the type MockSessionRepo
+func (_mock *MockSessionRepo) RevokeAllByUserID(ctx context.Context, userID string) error {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RevokeAllByUserID")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockSessionRepo_RevokeAllByUserID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RevokeAllByUserID'
+type MockSessionRepo_RevokeAllByUserID_Call struct {
+	*mock.Call
+}
+
+// RevokeAllByUserID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID string
+func (_e *MockSessionRepo_Expecter) RevokeAllByUserID(ctx interface{}, userID interface{}) *MockSessionRepo_RevokeAllByUserID_Call {
+	return &MockSessionRepo_RevokeAllByUserID_Call{Call: _e.mock.On("RevokeAllByUserID", ctx, userID)}
+}
+
+func (_c *MockSessionRepo_RevokeAllByUserID_Call) Run(run func(ctx context.Context, userID string)) *MockSessionRepo_RevokeAllByUserID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockSessionRepo_RevokeAllByUserID_Call) Return(err error) *MockSessionRepo_RevokeAllByUserID_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockSessionRepo_RevokeAllByUserID_Call) RunAndReturn(run func(ctx context.Context, userID string) error) *MockSessionRepo_RevokeAllByUserID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SaveRefreshGrace provides a mock function for the type MockSessionRepo
+func (_mock *MockSessionRepo) SaveRefreshGrace(ctx context.Context, oldSessionID string, grace *entity.RefreshGrace, ttl time.Duration) error {
+	ret := _mock.Called(ctx, oldSessionID, grace, ttl)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SaveRefreshGrace")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *entity.RefreshGrace, time.Duration) error); ok {
+		r0 = returnFunc(ctx, oldSessionID, grace, ttl)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockSessionRepo_SaveRefreshGrace_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveRefreshGrace'
+type MockSessionRepo_SaveRefreshGrace_Call struct {
+	*mock.Call
+}
+
+// SaveRefreshGrace is a helper method to define mock.On call
+//   - ctx context.Context
+//   - oldSessionID string
+//   - grace *entity.RefreshGrace
+//   - ttl time.Duration
+func (_e *MockSessionRepo_Expecter) SaveRefreshGrace(ctx interface{}, oldSessionID interface{}, grace interface{}, ttl interface{}) *MockSessionRepo_SaveRefreshGrace_Call {
+	return &MockSessionRepo_SaveRefreshGrace_Call{Call: _e.mock.On("SaveRefreshGrace", ctx, oldSessionID, grace, ttl)}
+}
+
+func (_c *MockSessionRepo_SaveRefreshGrace_Call) Run(run func(ctx context.Context, oldSessionID string, grace *entity.RefreshGrace, ttl time.Duration)) *MockSessionRepo_SaveRefreshGrace_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 *entity.RefreshGrace
+		if args[2] != nil {
+			arg2 = args[2].(*entity.RefreshGrace)
+		}
+		var arg3 time.Duration
+		if args[3] != nil {
+			arg3 = args[3].(time.Duration)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockSessionRepo_SaveRefreshGrace_Call) Return(err error) *MockSessionRepo_SaveRefreshGrace_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockSessionRepo_SaveRefreshGrace_Call) RunAndReturn(run func(ctx context.Context, oldSessionID string, grace *entity.RefreshGrace, ttl time.Duration) error) *MockSessionRepo_SaveRefreshGrace_Call {
 	_c.Call.Return(run)
 	return _c
 }

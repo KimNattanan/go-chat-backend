@@ -9,6 +9,6 @@ import (
 // V1 -.
 type V1 struct {
 	profileUsecase usecase.ProfileUseCase
-	l logger.Interface
-	v *validator.Validate
+	l              logger.Interface
+	v              *validator.Validate
 }

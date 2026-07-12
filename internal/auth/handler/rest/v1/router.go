@@ -23,11 +23,6 @@ func NewAuthRoutes(apiPublicGroup, apiPrivateGroup *echo.Group, authUseCase usec
 		authPublicGroup.POST("/login", r.login)
 		authPublicGroup.POST("/register", r.register)
 	}
-	userPublicGroup := apiPublicGroup.Group("/users")
-	{
-		userPublicGroup.GET("/:id", r.findUserByID)
-		userPublicGroup.GET("/email/:email", r.findUserByEmail)
-	}
 
 	// Private Routes
 
@@ -36,7 +31,10 @@ func NewAuthRoutes(apiPublicGroup, apiPrivateGroup *echo.Group, authUseCase usec
 		authPrivateGroup.GET("/me", r.getUser)
 		authPrivateGroup.POST("/logout", r.logout)
 		authPrivateGroup.DELETE("/me", r.deleteUser)
-		authPrivateGroup.POST("/refresh", r.refreshToken)
-
+	}
+	userPrivateGroup := apiPrivateGroup.Group("/users")
+	{
+		userPrivateGroup.GET("/:id", r.findUserByID)
+		userPrivateGroup.GET("/email/:email", r.findUserByEmail)
 	}
 }

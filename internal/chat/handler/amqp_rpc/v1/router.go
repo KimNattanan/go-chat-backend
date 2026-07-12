@@ -10,10 +10,10 @@ import (
 // NewChatRoutes -.
 func NewChatRoutes(roomUseCase usecase.RoomUseCase, membershipUseCase usecase.MembershipUseCase, l logger.Interface) map[string]rabbitmq.Handler {
 	r := &V1{
-		roomUseCase: roomUseCase,
+		roomUseCase:       roomUseCase,
 		membershipUseCase: membershipUseCase,
-		l:              l,
-		v:              validator.New(validator.WithRequiredStructEnabled()),
+		l:                 l,
+		v:                 validator.New(validator.WithRequiredStructEnabled()),
 	}
 	routes := make(map[string]rabbitmq.Handler)
 	routes["user.deleted"] = r.userDeleted

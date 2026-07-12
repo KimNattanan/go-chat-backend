@@ -11,9 +11,9 @@ import (
 // NewAuthRoutes -.
 func NewAuthRoutes(app *pbgrpc.Server, authUseCase usecase.AuthUseCase, l logger.Interface) {
 	r := &V1{
-		authUseCase:    authUseCase,
-		l:              l,
-		v:              validator.New(validator.WithRequiredStructEnabled()),
+		authUseCase: authUseCase,
+		l:           l,
+		v:           validator.New(validator.WithRequiredStructEnabled()),
 	}
 	{
 		v1.RegisterAuthServiceServer(app, r)

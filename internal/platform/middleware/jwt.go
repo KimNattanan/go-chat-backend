@@ -7,6 +7,7 @@ import (
 	authPb "github.com/KimNattanan/go-chat-backend/internal/auth/proto/v1"
 	"github.com/KimNattanan/go-chat-backend/internal/platform/config"
 	"github.com/KimNattanan/go-chat-backend/pkg/logger"
+	"github.com/KimNattanan/go-chat-backend/pkg/requestid"
 	"github.com/KimNattanan/go-chat-backend/pkg/responses"
 	"github.com/KimNattanan/go-chat-backend/pkg/token"
 	"github.com/labstack/echo/v5"
@@ -23,27 +24,36 @@ func readCookie(c *echo.Context, name string) (string, error) {
 	return cookie.Value, nil
 }
 
+func jwtLog(c *echo.Context, l logger.Interface) logger.Interface {
+	if rid := requestid.FromContext(c.Request().Context()); rid != "" {
+		return l.With(requestid.MetadataKey, rid)
+	}
+	return l
+}
+
 func JWTMiddleware(l logger.Interface, cfg *config.Config, jwtMaker *token.JWTMaker, authGrpcClient authPb.AuthServiceClient) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
+			log := jwtLog(c, l)
+
 			accessToken, err := readCookie(c, "access-token")
 			if err != nil {
-				l.Error(err, "JWTMiddleware")
+				log.Error(err, "JWTMiddleware")
 				return responses.ErrorResponseCustom(c, http.StatusInternalServerError, "failed to read cookie")
 			}
-			accessClaims, err := jwtMaker.VerifyToken(accessToken)
+			accessClaims, err := jwtMaker.VerifyToken(accessToken, token.TokenTypeAccess)
 			if err == nil {
 				c.Set("userID", accessClaims.ID)
 				return next(c)
 			}
 			refreshToken, err := readCookie(c, "refresh-token")
 			if err != nil {
-				l.Error(err, "JWTMiddleware")
+				log.Error(err, "JWTMiddleware")
 				return responses.ErrorResponseCustom(c, http.StatusInternalServerError, "failed to read cookie")
 			}
-			refreshClaims, err := jwtMaker.VerifyToken(refreshToken)
+			refreshClaims, err := jwtMaker.VerifyToken(refreshToken, token.TokenTypeRefresh)
 			if err != nil {
-				l.Error(err, "JWTMiddleware")
+				log.Warn(err, "JWTMiddleware")
 				return responses.ErrorResponseCustom(c, http.StatusUnauthorized, "unauthorized")
 			}
 
@@ -52,12 +62,18 @@ func JWTMiddleware(l logger.Interface, cfg *config.Config, jwtMaker *token.JWTMa
 				SessionId: refreshClaims.RegisteredClaims.ID,
 			})
 			if err != nil {
-				l.Error(err, "JWTMiddleware")
 				st, ok := status.FromError(err)
 				if !ok {
+					log.Error(err, "JWTMiddleware")
 					return responses.ErrorResponseCustom(c, http.StatusInternalServerError, "internal server error")
 				}
-				return responses.ErrorResponseCustom(c, responses.GrpcToHttpStatus(st.Code()), st.Message())
+				code := responses.GrpcToHttpStatus(st.Code())
+				if code >= http.StatusInternalServerError {
+					log.Error(err, "JWTMiddleware")
+				} else {
+					log.Warn(err, "JWTMiddleware")
+				}
+				return responses.ErrorResponseCustom(c, code, st.Message())
 			}
 
 			c.SetCookie(&http.Cookie{

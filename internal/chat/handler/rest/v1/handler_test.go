@@ -23,21 +23,22 @@ import (
 // noopLogger สำหรับเทส ไม่ log อะไร
 type noopLogger struct{}
 
-func (noopLogger) Debug(message any, args ...any) {}
+func (noopLogger) Debug(message any, args ...any)   {}
 func (noopLogger) Info(message string, args ...any) {}
-func (noopLogger) Warn(message string, args ...any) {}
-func (noopLogger) Error(message any, args ...any) {}
-func (noopLogger) Fatal(message any, args ...any) {}
+func (noopLogger) Warn(message any, args ...any)    {}
+func (noopLogger) Error(message any, args ...any)   {}
+func (noopLogger) Fatal(message any, args ...any)   {}
+func (n noopLogger) With(key, value string) logger.Interface { return n }
 
 var _ logger.Interface = (*noopLogger)(nil)
 
 // fakeRoomUseCase ใช้ในเทส
 type fakeRoomUseCase struct {
-	createFunc    func(ctx context.Context, room *entity.Room) error
-	findByIDFunc  func(ctx context.Context, id string) (*entity.Room, error)
-	findByUserID  func(ctx context.Context, userID string) ([]*entity.Room, error)
-	patchFunc     func(ctx context.Context, id string, room *entity.Room) (*entity.Room, error)
-	deleteFunc    func(ctx context.Context, id string) error
+	createFunc   func(ctx context.Context, room *entity.Room) error
+	findByIDFunc func(ctx context.Context, id string) (*entity.Room, error)
+	findByUserID func(ctx context.Context, userID string) ([]*entity.Room, error)
+	patchFunc    func(ctx context.Context, id string, room *entity.Room) (*entity.Room, error)
+	deleteFunc   func(ctx context.Context, id string) error
 }
 
 func (f *fakeRoomUseCase) Create(ctx context.Context, room *entity.Room) error {
@@ -79,12 +80,12 @@ var _ usecase.RoomUseCase = (*fakeRoomUseCase)(nil)
 
 // fakeMembershipUseCase ใช้ในเทส
 type fakeMembershipUseCase struct {
-	createFunc              func(ctx context.Context, m *entity.Membership) error
-	findByRoomIDFunc        func(ctx context.Context, roomID string) ([]*entity.Membership, error)
-	findByUserIDFunc        func(ctx context.Context, userID string) ([]*entity.Membership, error)
-	findByRoomIDAndUserID   func(ctx context.Context, roomID, userID string) (*entity.Membership, error)
-	deleteFunc              func(ctx context.Context, roomID, userID string) error
-	deleteByUserIDFunc      func(ctx context.Context, userID string) error
+	createFunc            func(ctx context.Context, m *entity.Membership) error
+	findByRoomIDFunc      func(ctx context.Context, roomID string) ([]*entity.Membership, error)
+	findByUserIDFunc      func(ctx context.Context, userID string) ([]*entity.Membership, error)
+	findByRoomIDAndUserID func(ctx context.Context, roomID, userID string) (*entity.Membership, error)
+	deleteFunc            func(ctx context.Context, roomID, userID string) error
+	deleteByUserIDFunc    func(ctx context.Context, userID string) error
 }
 
 func (f *fakeMembershipUseCase) Create(ctx context.Context, m *entity.Membership) error {

@@ -9,7 +9,6 @@ import (
 )
 
 type (
-	// Config -.
 	Config struct {
 		App     App
 		HTTP    HTTP
@@ -22,25 +21,21 @@ type (
 		JWT     JWT
 	}
 
-	// App -.
 	App struct {
 		ENV     string `env:"APP_ENV,required"`
 		Name    string `env:"APP_NAME,required"`
 		Version string `env:"APP_VERSION,required"`
 	}
 
-	// HTTP -.
 	HTTP struct {
 		Port           string `env:"HTTP_PORT,required"`
 		AllowedOrigins string `env:"HTTP_ALLOWED_ORIGINS" envDefault:"http://localhost:3000"`
 	}
 
-	// Log -.
 	Log struct {
 		Level string `env:"LOG_LEVEL,required"`
 	}
 
-	// DB -.
 	DB struct {
 		Host     string `env:"DB_HOST,required"`
 		Port     string `env:"DB_PORT,required"`
@@ -50,32 +45,27 @@ type (
 		DSN      string
 	}
 
-	// Redis -.
 	Redis struct {
 		Address  string `env:"REDIS_ADDRESS,required"`
 		Password string `env:"REDIS_PASSWORD,required"`
 		DB       int    `env:"REDIS_DB,required"`
 	}
 
-	// GRPC -.
 	GRPC struct {
 		Host string `env:"GRPC_HOST,required"`
 		Port string `env:"GRPC_PORT,required"`
 	}
 
-	// RMQ -.
 	RMQ struct {
 		ServerExchange string `env:"RMQ_RPC_SERVER,required"`
 		ClientExchange string `env:"RMQ_RPC_CLIENT,required"`
 		URL            string `env:"RMQ_URL,required"`
 	}
 
-	// Swagger -.
 	Swagger struct {
 		Enabled bool `env:"SWAGGER_ENABLED" envDefault:"false"`
 	}
 
-	// JWT -.
 	JWT struct {
 		Secret     string `env:"JWT_SECRET,required"`
 		AccessTTL  int    `env:"ACCESS_TTL" envDefault:"3600"`    // 1 hour, in seconds

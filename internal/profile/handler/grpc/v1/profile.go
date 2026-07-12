@@ -12,7 +12,7 @@ import (
 func (r *V1) FindProfile(ctx context.Context, req *v1.FindProfileRequest) (*v1.ProfileResponse, error) {
 	profile, err := r.profileUseCase.FindByUserID(ctx, req.UserId)
 	if err != nil {
-		return nil, apperror.ParseGrpc(err)
+		return nil, apperror.ParseGrpcLogged(ctx, r.l, err, "grpc - v1 - findProfile")
 	}
 
 	return &v1.ProfileResponse{
@@ -23,7 +23,7 @@ func (r *V1) FindProfile(ctx context.Context, req *v1.FindProfileRequest) (*v1.P
 func (r *V1) CreateProfile(ctx context.Context, req *v1.CreateProfileRequest) (*v1.ProfileResponse, error) {
 	userID, err := uuid.Parse(req.UserId)
 	if err != nil {
-		return nil, apperror.ParseGrpc(err)
+		return nil, apperror.ParseGrpcLogged(ctx, r.l, err, "grpc - v1 - createProfile")
 	}
 
 	profile := &entity.Profile{
@@ -32,7 +32,7 @@ func (r *V1) CreateProfile(ctx context.Context, req *v1.CreateProfileRequest) (*
 		Name:   req.Name,
 	}
 	if err := r.profileUseCase.Create(ctx, profile); err != nil {
-		return nil, apperror.ParseGrpc(err)
+		return nil, apperror.ParseGrpcLogged(ctx, r.l, err, "grpc - v1 - createProfile")
 	}
 
 	return &v1.ProfileResponse{
@@ -46,7 +46,7 @@ func (r *V1) PatchProfile(ctx context.Context, req *v1.PatchProfileRequest) (*v1
 	}
 	updatedProfile, err := r.profileUseCase.Patch(ctx, req.UserId, profile)
 	if err != nil {
-		return nil, apperror.ParseGrpc(err)
+		return nil, apperror.ParseGrpcLogged(ctx, r.l, err, "grpc - v1 - patchProfile")
 	}
 
 	return &v1.ProfileResponse{
@@ -56,7 +56,7 @@ func (r *V1) PatchProfile(ctx context.Context, req *v1.PatchProfileRequest) (*v1
 
 func (r *V1) DeleteProfile(ctx context.Context, req *v1.DeleteProfileRequest) (*v1.DeleteProfileResponse, error) {
 	if err := r.profileUseCase.Delete(ctx, req.UserId); err != nil {
-		return nil, apperror.ParseGrpc(err)
+		return nil, apperror.ParseGrpcLogged(ctx, r.l, err, "grpc - v1 - deleteProfile")
 	}
 
 	return &v1.DeleteProfileResponse{

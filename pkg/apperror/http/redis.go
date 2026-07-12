@@ -12,16 +12,13 @@ func ParseRedisError(err error) (int, string, bool) {
 		return 0, "", false
 	}
 
-	// Nil (key not found)
 	if errors.Is(err, redis.Nil) {
 		return http.StatusNotFound, "not found", true
 	}
 
-	// Redis specific error types
 	var redisErr redis.Error
 	if errors.As(err, &redisErr) {
-		// Most Redis server errors (WRONGTYPE, NOAUTH, etc.)
-		return http.StatusBadRequest, redisErr.Error(), true
+		return http.StatusInternalServerError, "redis error", true
 	}
 
 	return 0, "", false

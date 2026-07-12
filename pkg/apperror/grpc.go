@@ -1,8 +1,11 @@
 package apperror
 
 import (
+	"context"
 	"errors"
 
+	"github.com/KimNattanan/go-chat-backend/pkg/logger"
+	"github.com/KimNattanan/go-chat-backend/pkg/requestid"
 	"github.com/go-playground/validator/v10"
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc/codes"
@@ -10,12 +13,35 @@ import (
 	"gorm.io/gorm"
 )
 
+// ParseGrpcLogged logs the original error for ops, then maps it to a gRPC status.
+func ParseGrpcLogged(ctx context.Context, l logger.Interface, err error, op string) error {
+	if err == nil {
+		return nil
+	}
+	log := l
+	if rid := requestid.FromContext(ctx); rid != "" {
+		log = l.With(requestid.MetadataKey, rid)
+	}
+	code, _ := ParseHttp(err)
+	if code >= 500 {
+		log.Error(err, op)
+	} else {
+		log.Warn(err, op)
+	}
+	return ParseGrpc(err)
+}
+
 func ParseGrpc(err error) error {
 	if err == nil {
 		return nil
 	}
 	if _, ok := status.FromError(err); ok {
 		return err // already a gRPC status
+	}
+
+	var appErr *AppError
+	if errors.As(err, &appErr) {
+		return status.Error(httpToGrpcCode(appErr.Code), appErr.Message)
 	}
 
 	var redisErr redis.Error
@@ -78,7 +104,7 @@ func ParseGrpc(err error) error {
 		return status.Error(codes.AlreadyExists, "duplicate key")
 
 	case errors.Is(err, gorm.ErrForeignKeyViolated):
-		return status.Error(codes.FailedPrecondition, "foreign key violated")
+		return status.Error(codes.AlreadyExists, "foreign key violated")
 
 	// Redis
 
@@ -86,8 +112,25 @@ func ParseGrpc(err error) error {
 		return status.Error(codes.NotFound, "not found")
 
 	case errors.As(err, &redisErr):
-		return status.Error(codes.InvalidArgument, redisErr.Error())
+		return status.Error(codes.Internal, "redis error")
 	}
 
 	return status.Error(codes.Internal, "internal server error")
+}
+
+func httpToGrpcCode(httpCode int) codes.Code {
+	switch httpCode {
+	case 400:
+		return codes.InvalidArgument
+	case 401:
+		return codes.Unauthenticated
+	case 403:
+		return codes.PermissionDenied
+	case 404:
+		return codes.NotFound
+	case 409:
+		return codes.AlreadyExists
+	default:
+		return codes.Internal
+	}
 }

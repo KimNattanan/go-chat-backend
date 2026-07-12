@@ -29,13 +29,13 @@ func TestUseCase_Create(t *testing.T) {
 			UserID: userID,
 			RoomID: uuid.MustParse("6ba7b810-9dad-11d1-80b4-00c04fd430c8"),
 		}
-		
+
 		membershipRepo := mocks.NewMockMembershipRepo(t)
 		membershipRepo.EXPECT().
 			Create(context.Background(), membership).
 			Once().
 			Return(nil)
-		
+
 		uc := membershipUsecase.New(membershipRepo, authClient)
 		err := uc.Create(context.Background(), membership)
 		assert.NoError(t, err)

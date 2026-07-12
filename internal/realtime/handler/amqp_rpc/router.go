@@ -1,8 +1,8 @@
 package amqp_rpc
 
 import (
-	v1 "github.com/KimNattanan/go-chat-backend/internal/realtime/handler/amqp_rpc/v1"
 	"github.com/KimNattanan/go-chat-backend/internal/platform/wsserver"
+	v1 "github.com/KimNattanan/go-chat-backend/internal/realtime/handler/amqp_rpc/v1"
 	"github.com/KimNattanan/go-chat-backend/pkg/logger"
 	"github.com/KimNattanan/go-chat-backend/pkg/rabbitmq"
 )

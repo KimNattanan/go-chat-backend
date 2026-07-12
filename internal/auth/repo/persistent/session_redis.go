@@ -3,6 +3,7 @@ package persistent
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/KimNattanan/go-chat-backend/internal/auth/entity"
@@ -68,8 +69,8 @@ func (r *SessionRepo) FindByUserID(ctx context.Context, userID string) ([]*entit
 		cmds[i] = pipe.Get(ctx, "session:"+id)
 	}
 	_, err = pipe.Exec(ctx)
-	if err != nil {
-		return []*entity.Session{}, err
+	if err != nil && !errors.Is(err, redis.Nil) {
+		return nil, err
 	}
 
 	var sessions []*entity.Session
@@ -87,7 +88,7 @@ func (r *SessionRepo) FindByUserID(ctx context.Context, userID string) ([]*entit
 		}
 	}
 	if len(staleIDs) > 0 {
-		go r.rdb.SRem(ctx, userSessionsKey, staleIDs)
+		_ = r.rdb.SRem(ctx, userSessionsKey, staleIDs).Err()
 	}
 
 	return sessions, nil
@@ -120,6 +121,80 @@ func (r *SessionRepo) Revoke(ctx context.Context, id string) error {
 	return nil
 }
 
+func (r *SessionRepo) RevokeAllByUserID(ctx context.Context, userID string) error {
+	userSessionsKey := "user_sessions:" + userID
+	sessionIDs, err := r.rdb.SMembers(ctx, userSessionsKey).Result()
+	if err != nil {
+		return err
+	}
+
+	for _, id := range sessionIDs {
+		if err := r.Revoke(ctx, id); err != nil && !errors.Is(err, redis.Nil) {
+			return err
+		}
+		if err := r.rdb.Del(ctx,
+			"session:refresh_grace:"+id,
+			"session:refresh_lock:"+id,
+		).Err(); err != nil {
+			return err
+		}
+	}
+
+	return r.rdb.Del(ctx, userSessionsKey).Err()
+}
+
 func (r *SessionRepo) Delete(ctx context.Context, id string) error {
-	return r.rdb.Del(ctx, "session:"+id).Err()
+	session, err := r.FindByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return nil
+		}
+		return err
+	}
+
+	pipe := r.rdb.TxPipeline()
+	pipe.Del(ctx, "session:"+id)
+	pipe.Del(ctx, "session:refresh_grace:"+id)
+	pipe.Del(ctx, "session:refresh_lock:"+id)
+	pipe.SRem(ctx, "user_sessions:"+session.UserID.String(), id)
+	_, err = pipe.Exec(ctx)
+	return err
+}
+
+func (r *SessionRepo) AcquireRefreshLock(ctx context.Context, sessionID string, ttl time.Duration) (bool, error) {
+	err := r.rdb.SetArgs(ctx, "session:refresh_lock:"+sessionID, "1", redis.SetArgs{
+		Mode: "NX",
+		TTL:  ttl,
+	}).Err()
+	if err == nil {
+		return true, nil
+	}
+	if errors.Is(err, redis.Nil) {
+		return false, nil
+	}
+	return false, err
+}
+
+func (r *SessionRepo) ReleaseRefreshLock(ctx context.Context, sessionID string) error {
+	return r.rdb.Del(ctx, "session:refresh_lock:"+sessionID).Err()
+}
+
+func (r *SessionRepo) SaveRefreshGrace(ctx context.Context, oldSessionID string, grace *entity.RefreshGrace, ttl time.Duration) error {
+	data, err := json.Marshal(grace)
+	if err != nil {
+		return err
+	}
+	return r.rdb.Set(ctx, "session:refresh_grace:"+oldSessionID, data, ttl).Err()
+}
+
+func (r *SessionRepo) FindRefreshGrace(ctx context.Context, oldSessionID string) (*entity.RefreshGrace, error) {
+	data, err := r.rdb.Get(ctx, "session:refresh_grace:"+oldSessionID).Bytes()
+	if err != nil {
+		return nil, err
+	}
+	var grace entity.RefreshGrace
+	if err := json.Unmarshal(data, &grace); err != nil {
+		return nil, err
+	}
+	return &grace, nil
 }

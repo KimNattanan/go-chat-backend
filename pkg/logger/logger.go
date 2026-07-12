@@ -12,9 +12,10 @@ import (
 type Interface interface {
 	Debug(message any, args ...any)
 	Info(message string, args ...any)
-	Warn(message string, args ...any)
+	Warn(message any, args ...any)
 	Error(message any, args ...any)
 	Fatal(message any, args ...any)
+	With(key, value string) Interface
 }
 
 // Logger -.
@@ -56,6 +57,12 @@ func New(level string) *Logger {
 	}
 }
 
+// With returns a child logger with a structured string field.
+func (l *Logger) With(key, value string) Interface {
+	child := l.logger.With().Str(key, value).Logger()
+	return &Logger{logger: &child}
+}
+
 // Debug -.
 func (l *Logger) Debug(message any, args ...any) {
 	l.msg(zerolog.DebugLevel, message, args...)
@@ -67,16 +74,12 @@ func (l *Logger) Info(message string, args ...any) {
 }
 
 // Warn -.
-func (l *Logger) Warn(message string, args ...any) {
-	l.log(zerolog.WarnLevel, message, args...)
+func (l *Logger) Warn(message any, args ...any) {
+	l.msg(zerolog.WarnLevel, message, args...)
 }
 
 // Error -.
 func (l *Logger) Error(message any, args ...any) {
-	if l.logger.GetLevel() == zerolog.DebugLevel {
-		l.Debug(message, args...)
-	}
-
 	l.msg(zerolog.ErrorLevel, message, args...)
 }
 
@@ -95,10 +98,30 @@ func (l *Logger) log(level zerolog.Level, message string, args ...any) {
 	}
 }
 
+func (l *Logger) logErr(level zerolog.Level, err error, message string) {
+	l.logger.WithLevel(level).Err(err).Msg(message)
+}
+
+// msg handles Debug/Warn/Error/Fatal.
+// Call sites use either:
+//   - Error(err) / Error(err, "context label")
+//   - Error("message") / Error("format %s", arg)
 func (l *Logger) msg(level zerolog.Level, message any, args ...any) {
 	switch msg := message.(type) {
 	case error:
-		l.log(level, msg.Error(), args...)
+		if len(args) == 0 {
+			l.logErr(level, msg, msg.Error())
+			return
+		}
+		if label, ok := args[0].(string); ok {
+			if len(args) > 1 {
+				l.logErr(level, msg, fmt.Sprintf(label, args[1:]...))
+				return
+			}
+			l.logErr(level, msg, label)
+			return
+		}
+		l.logErr(level, msg, fmt.Sprint(args...))
 	case string:
 		l.log(level, msg, args...)
 	default:

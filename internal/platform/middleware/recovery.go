@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/KimNattanan/go-chat-backend/pkg/logger"
+	"github.com/KimNattanan/go-chat-backend/pkg/responses"
 	"github.com/labstack/echo/v5"
 )
 
@@ -19,7 +20,7 @@ func buildPanicMessage(c *echo.Context, err any) string {
 	result.WriteString(" ")
 	result.WriteString(c.Request().RequestURI)
 	result.WriteString(" PANIC DETECTED: ")
-	result.WriteString(fmt.Sprintf("%v\n%s\n", err, debug.Stack())) //nolint: staticcheck,gocritic // it's okay for panic
+	fmt.Fprintf(&result, "%v\n%s\n", err, debug.Stack()) //nolint: staticcheck,gocritic // it's okay for panic
 
 	return result.String()
 }
@@ -30,10 +31,7 @@ func Recovery(l logger.Interface) echo.MiddlewareFunc {
 			defer func() {
 				if r := recover(); r != nil {
 					l.Error(buildPanicMessage(c, r))
-					err = echo.NewHTTPError(
-						http.StatusInternalServerError,
-						http.StatusText(http.StatusInternalServerError),
-					)
+					err = responses.ErrorResponseCustom(c, http.StatusInternalServerError, "internal server error")
 				}
 			}()
 			return next(c)

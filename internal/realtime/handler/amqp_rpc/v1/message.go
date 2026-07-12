@@ -5,16 +5,17 @@ import (
 	"encoding/json"
 
 	"github.com/KimNattanan/go-chat-backend/internal/realtime/handler/amqp_rpc/v1/request"
+	"github.com/KimNattanan/go-chat-backend/pkg/responses"
 )
 
 func (r *V1) messageCreated(ctx context.Context, data []byte) error {
 	var req request.MessageCreatedRequest
 	if err := json.Unmarshal(data, &req); err != nil {
-		r.l.Error(err, "amqp_rpc - V1 - messageCreated")
+		responses.LogAMQP(r.l, err, "amqp_rpc - V1 - messageCreated")
 		return err
 	}
 	if err := r.v.Struct(&req); err != nil {
-		r.l.Error(err, "amqp_rpc - V1 - messageCreated")
+		responses.LogAMQP(r.l, err, "amqp_rpc - V1 - messageCreated")
 		return err
 	}
 
@@ -30,11 +31,11 @@ func (r *V1) messageCreated(ctx context.Context, data []byte) error {
 func (r *V1) messageDeleted(ctx context.Context, data []byte) error {
 	var req request.MessageDeletedRequest
 	if err := json.Unmarshal(data, &req); err != nil {
-		r.l.Error(err, "amqp_rpc - V1 - messageDeleted")
+		responses.LogAMQP(r.l, err, "amqp_rpc - V1 - messageDeleted")
 		return err
 	}
 	if err := r.v.Struct(&req); err != nil {
-		r.l.Error(err, "amqp_rpc - V1 - messageDeleted")
+		responses.LogAMQP(r.l, err, "amqp_rpc - V1 - messageDeleted")
 		return err
 	}
 

@@ -10,6 +10,6 @@ import (
 type V1 struct {
 	roomUseCase       usecase.RoomUseCase
 	membershipUseCase usecase.MembershipUseCase
-	l logger.Interface
-	v *validator.Validate
+	l                 logger.Interface
+	v                 *validator.Validate
 }

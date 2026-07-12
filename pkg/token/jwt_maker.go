@@ -15,8 +15,8 @@ func NewJWTMaker(secretKey string) *JWTMaker {
 	return &JWTMaker{secretKey}
 }
 
-func (maker *JWTMaker) CreateToken(id string, duration time.Duration) (string, *UserClaims, error) {
-	claims, err := NewUserClaims(id, duration)
+func (maker *JWTMaker) CreateToken(id string, tokenType TokenType, duration time.Duration) (string, *UserClaims, error) {
+	claims, err := NewUserClaims(id, tokenType, duration)
 	if err != nil {
 		return "", nil, err
 	}
@@ -29,7 +29,7 @@ func (maker *JWTMaker) CreateToken(id string, duration time.Duration) (string, *
 	return tokenStr, claims, nil
 }
 
-func (maker *JWTMaker) VerifyToken(tokenStr string) (*UserClaims, error) {
+func (maker *JWTMaker) VerifyToken(tokenStr string, expectedType TokenType) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)
 		if !ok {
@@ -46,6 +46,9 @@ func (maker *JWTMaker) VerifyToken(tokenStr string) (*UserClaims, error) {
 	}
 	if claims.RegisteredClaims.ExpiresAt.Time.Before(time.Now()) {
 		return nil, fmt.Errorf("token has expired")
+	}
+	if claims.TokenType != expectedType {
+		return nil, fmt.Errorf("invalid token type: expected %s, got %s", expectedType, claims.TokenType)
 	}
 	return claims, nil
 }

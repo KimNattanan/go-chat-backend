@@ -15,8 +15,7 @@ func (r *V1) findMembershipsByRoomID(c *echo.Context) error {
 
 	memberships, err := r.membershipUseCase.FindByRoomID(ctx, roomID)
 	if err != nil {
-		r.l.Error(err, "rest - v1 - findMembershipByRoomID")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - findMembershipByRoomID")
 	}
 
 	return c.JSON(http.StatusOK, toMembershipResponseList(memberships))
@@ -28,8 +27,7 @@ func (r *V1) findMembershipsByUserID(c *echo.Context) error {
 
 	memberships, err := r.membershipUseCase.FindByRoomID(ctx, userID)
 	if err != nil {
-		r.l.Error(err, "rest - v1 - findMembershipByUserID")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - findMembershipByUserID")
 	}
 
 	return c.JSON(http.StatusOK, toMembershipResponseList(memberships))
@@ -42,8 +40,7 @@ func (r *V1) findMembershipByRoomIDAndUserID(c *echo.Context) error {
 
 	membership, err := r.membershipUseCase.FindByRoomIDAndUserID(ctx, roomID, userID)
 	if err != nil {
-		r.l.Error(err, "rest - v1 - findMembership")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - findMembership")
 	}
 
 	return c.JSON(http.StatusOK, toMembershipResponse(membership))
@@ -55,15 +52,13 @@ func (r *V1) createMembership(c *echo.Context) error {
 	roomIDStr := c.Param("roomID")
 	roomID, err := uuid.Parse(roomIDStr)
 	if err != nil {
-		r.l.Error(err, "rest - v1 - createMembership")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - createMembership")
 	}
 
 	userIDStr := c.Param("userID")
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		r.l.Error(err, "rest - v1 - createMembership")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - createMembership")
 	}
 
 	membership := &entity.Membership{
@@ -71,8 +66,7 @@ func (r *V1) createMembership(c *echo.Context) error {
 		UserID: userID,
 	}
 	if err := r.membershipUseCase.Create(ctx, membership); err != nil {
-		r.l.Error(err, "rest - v1 - createMembership")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - createMembership")
 	}
 
 	return c.JSON(http.StatusCreated, toMembershipResponse(membership))
@@ -83,8 +77,7 @@ func (r *V1) deleteMembershipsByUserID(c *echo.Context) error {
 	userID := c.Param("userID")
 
 	if err := r.membershipUseCase.DeleteByUserID(ctx, userID); err != nil {
-		r.l.Error(err, "rest - v1 - deleteMembershipByUserID")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - deleteMembershipByUserID")
 	}
 
 	return responses.MessageResponse(c, http.StatusOK, "memberships deleted")
@@ -96,8 +89,7 @@ func (r *V1) deleteMembershipByRoomIDAndUserID(c *echo.Context) error {
 	userID := c.Param("userID")
 
 	if err := r.membershipUseCase.Delete(ctx, roomID, userID); err != nil {
-		r.l.Error(err, "rest - v1 - deleteMembership")
-		return responses.ErrorResponse(c, err)
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - deleteMembership")
 	}
 
 	return responses.MessageResponse(c, http.StatusOK, "membership deleted")

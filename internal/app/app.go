@@ -47,7 +47,9 @@ import (
 	"github.com/KimNattanan/go-chat-backend/pkg/rabbitmq"
 	"github.com/KimNattanan/go-chat-backend/pkg/ratelimit"
 	"github.com/KimNattanan/go-chat-backend/pkg/redisclient"
+	"github.com/KimNattanan/go-chat-backend/pkg/requestid"
 	"github.com/KimNattanan/go-chat-backend/pkg/token"
+	"github.com/labstack/echo/v5"
 	echoMiddleware "github.com/labstack/echo/v5/middleware"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -68,7 +70,11 @@ func Run(cfg *config.Config) {
 	rdb := redisclient.New(cfg.Redis.Address, cfg.Redis.Password, cfg.Redis.DB)
 
 	// gRPC Client
-	grpcClientConn, err := grpc.NewClient(cfg.GRPC.Host+":"+cfg.GRPC.Port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	grpcClientConn, err := grpc.NewClient(
+		cfg.GRPC.Host+":"+cfg.GRPC.Port,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(requestid.UnaryClientInterceptor()),
+	)
 	if err != nil {
 		l.Fatal(fmt.Errorf("app - Run - grpc.NewClient: %w", err))
 	}
@@ -157,6 +163,13 @@ func Run(cfg *config.Config) {
 		AllowHeaders:     []string{"Accept", "Content-Type", "Origin", "Authorization"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowCredentials: true,
+	}))
+	httpServer.Echo.Use(echoMiddleware.RequestIDWithConfig(echoMiddleware.RequestIDConfig{
+		RequestIDHandler: func(c *echo.Context, id string) {
+			c.Set(requestid.EchoContextKey, id)
+			c.Request().Header.Set(echo.HeaderXRequestID, id)
+			c.SetRequest(c.Request().WithContext(requestid.WithContext(c.Request().Context(), id)))
+		},
 	}))
 	httpServer.Echo.Use(ratelimitMiddleware)
 	httpServer.Echo.Use(middleware.Logger(l))
