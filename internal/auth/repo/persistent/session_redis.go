@@ -115,12 +115,13 @@ func (r *SessionRepo) Revoke(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	if err := r.rdb.Set(ctx, key, newData, ttl).Err(); err != nil {
-		return err
-	}
-	return nil
-}
 
+	pipe := r.rdb.TxPipeline()
+	pipe.Set(ctx, key, newData, ttl)
+	pipe.Del(ctx, "session:refresh_grace:"+id)
+	_, err = pipe.Exec(ctx)
+	return err
+}
 func (r *SessionRepo) RevokeAllByUserID(ctx context.Context, userID string) error {
 	userSessionsKey := "user_sessions:" + userID
 	sessionIDs, err := r.rdb.SMembers(ctx, userSessionsKey).Result()
@@ -132,10 +133,7 @@ func (r *SessionRepo) RevokeAllByUserID(ctx context.Context, userID string) erro
 		if err := r.Revoke(ctx, id); err != nil && !errors.Is(err, redis.Nil) {
 			return err
 		}
-		if err := r.rdb.Del(ctx,
-			"session:refresh_grace:"+id,
-			"session:refresh_lock:"+id,
-		).Err(); err != nil {
+		if err := r.rdb.Del(ctx, "session:refresh_lock:"+id).Err(); err != nil {
 			return err
 		}
 	}
