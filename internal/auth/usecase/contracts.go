@@ -23,7 +23,7 @@ type (
 
 		Login(ctx context.Context, email, password string) (*AuthResult, error)
 		Register(ctx context.Context, email, password, name string) (*AuthResult, error)
-		Logout(ctx context.Context, refreshToken string) error
+		Logout(ctx context.Context, accessToken, refreshToken string) error
 		RefreshTokenBySessionID(ctx context.Context, userID, oldSessionID string) (*AuthResult, error)
 	}
 )

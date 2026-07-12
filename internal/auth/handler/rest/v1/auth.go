@@ -96,25 +96,14 @@ func (r *V1) register(c *echo.Context) error {
 	return responses.MessageResponse(c, http.StatusOK, "registered successfully")
 }
 
-func (r *V1) logout(c *echo.Context) error {
-	ctx := c.Request().Context()
-
-	refreshToken, err := readCookie(c, "refresh-token")
-	if err != nil {
-		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - logout")
-	}
-
-	if err := r.authUseCase.Logout(ctx, refreshToken); err != nil {
-		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - logout")
-	}
-
+func clearAuthCookies(c *echo.Context, appEnv string) {
 	c.SetCookie(&http.Cookie{
 		Name:     "access-token",
 		Value:    "",
 		Expires:  time.Now(),
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   r.appEnv == "production",
+		Secure:   appEnv == "production",
 		SameSite: http.SameSiteLaxMode,
 	})
 	c.SetCookie(&http.Cookie{
@@ -123,10 +112,28 @@ func (r *V1) logout(c *echo.Context) error {
 		Expires:  time.Now(),
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   r.appEnv == "production",
+		Secure:   appEnv == "production",
 		SameSite: http.SameSiteLaxMode,
 	})
+}
 
+func (r *V1) logout(c *echo.Context) error {
+	ctx := c.Request().Context()
+
+	accessToken, err := readCookie(c, "access-token")
+	if err != nil {
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - logout")
+	}
+	refreshToken, err := readCookie(c, "refresh-token")
+	if err != nil {
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - logout")
+	}
+
+	if err := r.authUseCase.Logout(ctx, accessToken, refreshToken); err != nil {
+		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - logout")
+	}
+
+	clearAuthCookies(c, r.appEnv)
 	return responses.MessageResponse(c, http.StatusOK, "logged out successfully")
 }
 
@@ -174,5 +181,6 @@ func (r *V1) deleteUser(c *echo.Context) error {
 		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - deleteUser")
 	}
 
+	clearAuthCookies(c, r.appEnv)
 	return responses.MessageResponse(c, http.StatusOK, "user deleted")
 }

@@ -502,6 +502,69 @@ func (_c *MockSessionRepo_Delete_Call) RunAndReturn(run func(ctx context.Context
 	return _c
 }
 
+// DenylistAccessToken provides a mock function for the type MockSessionRepo
+func (_mock *MockSessionRepo) DenylistAccessToken(ctx context.Context, jti string, ttl time.Duration) error {
+	ret := _mock.Called(ctx, jti, ttl)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DenylistAccessToken")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, time.Duration) error); ok {
+		r0 = returnFunc(ctx, jti, ttl)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockSessionRepo_DenylistAccessToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DenylistAccessToken'
+type MockSessionRepo_DenylistAccessToken_Call struct {
+	*mock.Call
+}
+
+// DenylistAccessToken is a helper method to define mock.On call
+//   - ctx context.Context
+//   - jti string
+//   - ttl time.Duration
+func (_e *MockSessionRepo_Expecter) DenylistAccessToken(ctx interface{}, jti interface{}, ttl interface{}) *MockSessionRepo_DenylistAccessToken_Call {
+	return &MockSessionRepo_DenylistAccessToken_Call{Call: _e.mock.On("DenylistAccessToken", ctx, jti, ttl)}
+}
+
+func (_c *MockSessionRepo_DenylistAccessToken_Call) Run(run func(ctx context.Context, jti string, ttl time.Duration)) *MockSessionRepo_DenylistAccessToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 time.Duration
+		if args[2] != nil {
+			arg2 = args[2].(time.Duration)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockSessionRepo_DenylistAccessToken_Call) Return(err error) *MockSessionRepo_DenylistAccessToken_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockSessionRepo_DenylistAccessToken_Call) RunAndReturn(run func(ctx context.Context, jti string, ttl time.Duration) error) *MockSessionRepo_DenylistAccessToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FindByID provides a mock function for the type MockSessionRepo
 func (_mock *MockSessionRepo) FindByID(ctx context.Context, id string) (*entity.Session, error) {
 	ret := _mock.Called(ctx, id)
@@ -702,6 +765,147 @@ func (_c *MockSessionRepo_FindRefreshGrace_Call) Return(refreshGrace *entity.Ref
 }
 
 func (_c *MockSessionRepo_FindRefreshGrace_Call) RunAndReturn(run func(ctx context.Context, oldSessionID string) (*entity.RefreshGrace, error)) *MockSessionRepo_FindRefreshGrace_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// InvalidateUserAccessTokens provides a mock function for the type MockSessionRepo
+func (_mock *MockSessionRepo) InvalidateUserAccessTokens(ctx context.Context, userID string, ttl time.Duration) error {
+	ret := _mock.Called(ctx, userID, ttl)
+
+	if len(ret) == 0 {
+		panic("no return value specified for InvalidateUserAccessTokens")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, time.Duration) error); ok {
+		r0 = returnFunc(ctx, userID, ttl)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockSessionRepo_InvalidateUserAccessTokens_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InvalidateUserAccessTokens'
+type MockSessionRepo_InvalidateUserAccessTokens_Call struct {
+	*mock.Call
+}
+
+// InvalidateUserAccessTokens is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID string
+//   - ttl time.Duration
+func (_e *MockSessionRepo_Expecter) InvalidateUserAccessTokens(ctx interface{}, userID interface{}, ttl interface{}) *MockSessionRepo_InvalidateUserAccessTokens_Call {
+	return &MockSessionRepo_InvalidateUserAccessTokens_Call{Call: _e.mock.On("InvalidateUserAccessTokens", ctx, userID, ttl)}
+}
+
+func (_c *MockSessionRepo_InvalidateUserAccessTokens_Call) Run(run func(ctx context.Context, userID string, ttl time.Duration)) *MockSessionRepo_InvalidateUserAccessTokens_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 time.Duration
+		if args[2] != nil {
+			arg2 = args[2].(time.Duration)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockSessionRepo_InvalidateUserAccessTokens_Call) Return(err error) *MockSessionRepo_InvalidateUserAccessTokens_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockSessionRepo_InvalidateUserAccessTokens_Call) RunAndReturn(run func(ctx context.Context, userID string, ttl time.Duration) error) *MockSessionRepo_InvalidateUserAccessTokens_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// IsAccessRevoked provides a mock function for the type MockSessionRepo
+func (_mock *MockSessionRepo) IsAccessRevoked(ctx context.Context, jti string, userID string, issuedAt time.Time) (bool, error) {
+	ret := _mock.Called(ctx, jti, userID, issuedAt)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsAccessRevoked")
+	}
+
+	var r0 bool
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, time.Time) (bool, error)); ok {
+		return returnFunc(ctx, jti, userID, issuedAt)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, time.Time) bool); ok {
+		r0 = returnFunc(ctx, jti, userID, issuedAt)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, time.Time) error); ok {
+		r1 = returnFunc(ctx, jti, userID, issuedAt)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockSessionRepo_IsAccessRevoked_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsAccessRevoked'
+type MockSessionRepo_IsAccessRevoked_Call struct {
+	*mock.Call
+}
+
+// IsAccessRevoked is a helper method to define mock.On call
+//   - ctx context.Context
+//   - jti string
+//   - userID string
+//   - issuedAt time.Time
+func (_e *MockSessionRepo_Expecter) IsAccessRevoked(ctx interface{}, jti interface{}, userID interface{}, issuedAt interface{}) *MockSessionRepo_IsAccessRevoked_Call {
+	return &MockSessionRepo_IsAccessRevoked_Call{Call: _e.mock.On("IsAccessRevoked", ctx, jti, userID, issuedAt)}
+}
+
+func (_c *MockSessionRepo_IsAccessRevoked_Call) Run(run func(ctx context.Context, jti string, userID string, issuedAt time.Time)) *MockSessionRepo_IsAccessRevoked_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 time.Time
+		if args[3] != nil {
+			arg3 = args[3].(time.Time)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *MockSessionRepo_IsAccessRevoked_Call) Return(b bool, err error) *MockSessionRepo_IsAccessRevoked_Call {
+	_c.Call.Return(b, err)
+	return _c
+}
+
+func (_c *MockSessionRepo_IsAccessRevoked_Call) RunAndReturn(run func(ctx context.Context, jti string, userID string, issuedAt time.Time) (bool, error)) *MockSessionRepo_IsAccessRevoked_Call {
 	_c.Call.Return(run)
 	return _c
 }

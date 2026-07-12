@@ -90,9 +90,10 @@ func Run(cfg *config.Config) {
 	defer rmqPublisher.Close()
 
 	// Use-Case
+	sessionRepo := authPersistent.NewSessionRepo(rdb)
 	authUseCase := authUseCase.New(
 		authPersistent.NewUserRepo(pg.DB),
-		authPersistent.NewSessionRepo(rdb),
+		sessionRepo,
 		rmqPublisher,
 		jwtMaker,
 		cfg.JWT.AccessTTL,
@@ -154,7 +155,7 @@ func Run(cfg *config.Config) {
 	ratelimitMiddleware := ratelimit.RateLimitMiddleware(
 		ratelimit.NewRateLimiter(100, 10, 10*time.Minute),
 	)
-	jwtMiddleware := middleware.JWTMiddleware(l, cfg, jwtMaker, authGrpcClient)
+	jwtMiddleware := middleware.JWTMiddleware(l, cfg, jwtMaker, authGrpcClient, sessionRepo)
 
 	// HTTP Server
 	httpServer := httpserver.New(l, httpserver.Port(cfg.HTTP.Port))

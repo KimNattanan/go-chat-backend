@@ -54,6 +54,9 @@ func (u *UseCase) DeleteUser(ctx context.Context, id string) error {
 	if err := u.sessionRepo.RevokeAllByUserID(ctx, id); err != nil {
 		return fmt.Errorf("AuthUseCase - DeleteUser - u.sessionRepo.RevokeAllByUserID: %w", err)
 	}
+	if err := u.sessionRepo.InvalidateUserAccessTokens(ctx, id, u.accessTTL); err != nil {
+		return fmt.Errorf("AuthUseCase - DeleteUser - u.sessionRepo.InvalidateUserAccessTokens: %w", err)
+	}
 	if err := u.mqPublisher.Publish("user.deleted", map[string]string{
 		"user_id": id,
 	}); err != nil {
@@ -157,13 +160,21 @@ func (u *UseCase) Register(ctx context.Context, email, password, name string) (*
 	return result, nil
 }
 
-func (u *UseCase) Logout(ctx context.Context, refreshToken string) error {
+func (u *UseCase) Logout(ctx context.Context, accessToken, refreshToken string) error {
 	refreshClaims, err := u.jwtMaker.VerifyToken(refreshToken, token.TokenTypeRefresh)
 	if err != nil {
 		return fmt.Errorf("AuthUseCase - Logout - u.jwtMaker.VerifyToken: %w", err)
 	}
 	if err := u.sessionRepo.Revoke(ctx, refreshClaims.RegisteredClaims.ID); err != nil {
 		return fmt.Errorf("AuthUseCase - Logout - u.sessionRepo.Revoke: %w", err)
+	}
+	if accessToken != "" {
+		if accessClaims, err := u.jwtMaker.VerifyToken(accessToken, token.TokenTypeAccess); err == nil {
+			ttl := time.Until(accessClaims.ExpiresAt.Time)
+			if err := u.sessionRepo.DenylistAccessToken(ctx, accessClaims.RegisteredClaims.ID, ttl); err != nil {
+				return fmt.Errorf("AuthUseCase - Logout - u.sessionRepo.DenylistAccessToken: %w", err)
+			}
+		}
 	}
 	return nil
 }
@@ -200,6 +211,9 @@ func (u *UseCase) tokensFromRefreshGrace(ctx context.Context, grace *entity.Refr
 func (u *UseCase) handleRefreshReuse(ctx context.Context, userID string) error {
 	if err := u.sessionRepo.RevokeAllByUserID(ctx, userID); err != nil {
 		return fmt.Errorf("AuthUseCase - handleRefreshReuse - RevokeAllByUserID: %w", err)
+	}
+	if err := u.sessionRepo.InvalidateUserAccessTokens(ctx, userID, u.accessTTL); err != nil {
+		return fmt.Errorf("AuthUseCase - handleRefreshReuse - InvalidateUserAccessTokens: %w", err)
 	}
 	return apperror.Unauthorized("invalid refresh token", nil)
 }

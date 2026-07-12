@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/KimNattanan/go-chat-backend/internal/auth/entity"
@@ -195,4 +196,45 @@ func (r *SessionRepo) FindRefreshGrace(ctx context.Context, oldSessionID string)
 		return nil, err
 	}
 	return &grace, nil
+}
+
+func (r *SessionRepo) DenylistAccessToken(ctx context.Context, jti string, ttl time.Duration) error {
+	if jti == "" || ttl <= 0 {
+		return nil
+	}
+	return r.rdb.SetArgs(ctx, "access_denylist:"+jti, "1", redis.SetArgs{TTL: ttl}).Err()
+}
+
+func (r *SessionRepo) InvalidateUserAccessTokens(ctx context.Context, userID string, ttl time.Duration) error {
+	if userID == "" || ttl <= 0 {
+		return nil
+	}
+	// Tokens issued at or before this unix second are rejected.
+	return r.rdb.SetArgs(ctx, "user:"+userID+":access_invalid_before", time.Now().Unix(), redis.SetArgs{TTL: ttl}).Err()
+}
+
+func (r *SessionRepo) IsAccessRevoked(ctx context.Context, jti, userID string, issuedAt time.Time) (bool, error) {
+	n, err := r.rdb.Exists(ctx, "access_denylist:"+jti).Result()
+	if err != nil {
+		return false, err
+	}
+	if n > 0 {
+		return true, nil
+	}
+
+	raw, err := r.rdb.Get(ctx, "user:"+userID+":access_invalid_before").Result()
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return false, nil
+		}
+		return false, err
+	}
+	invalidBefore, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil {
+		return false, err
+	}
+	if !issuedAt.After(time.Unix(invalidBefore, 0)) {
+		return true, nil
+	}
+	return false, nil
 }

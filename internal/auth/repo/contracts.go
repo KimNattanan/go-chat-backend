@@ -26,5 +26,9 @@ type (
 		ReleaseRefreshLock(ctx context.Context, sessionID string) error
 		SaveRefreshGrace(ctx context.Context, oldSessionID string, grace *entity.RefreshGrace, ttl time.Duration) error
 		FindRefreshGrace(ctx context.Context, oldSessionID string) (*entity.RefreshGrace, error)
+
+		DenylistAccessToken(ctx context.Context, jti string, ttl time.Duration) error
+		InvalidateUserAccessTokens(ctx context.Context, userID string, ttl time.Duration) error
+		IsAccessRevoked(ctx context.Context, jti, userID string, issuedAt time.Time) (bool, error)
 	}
 )

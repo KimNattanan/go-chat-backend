@@ -7,7 +7,7 @@ package mocks
 import (
 	"context"
 
-	v1 "github.com/KimNattanan/go-chat-backend/internal/auth/proto/v1"
+	"github.com/KimNattanan/go-chat-backend/internal/auth/proto/v1"
 	mock "github.com/stretchr/testify/mock"
 	"google.golang.org/grpc"
 )
