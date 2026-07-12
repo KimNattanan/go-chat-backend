@@ -43,7 +43,7 @@ func (r *V1) Register(ctx context.Context, req *v1.RegisterRequest) (*v1.Registe
 }
 
 func (r *V1) Logout(ctx context.Context, req *v1.LogoutRequest) (*v1.LogoutResponse, error) {
-	if err := r.authUseCase.Logout(ctx, "", req.RefreshToken); err != nil {
+	if err := r.authUseCase.Logout(ctx, req.RefreshToken); err != nil {
 		return nil, apperror.ParseGrpcLogged(ctx, r.l, err, "grpc - v1 - logout")
 	}
 

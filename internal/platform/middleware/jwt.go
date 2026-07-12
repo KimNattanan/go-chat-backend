@@ -1,10 +1,8 @@
 package middleware
 
 import (
-	"context"
 	"errors"
 	"net/http"
-	"time"
 
 	authPb "github.com/KimNattanan/go-chat-backend/internal/auth/proto/v1"
 	"github.com/KimNattanan/go-chat-backend/internal/platform/config"
@@ -15,10 +13,6 @@ import (
 	"github.com/labstack/echo/v5"
 	"google.golang.org/grpc/status"
 )
-
-type AccessRevocationChecker interface {
-	IsAccessRevoked(ctx context.Context, jti, userID string, issuedAt time.Time) (bool, error)
-}
 
 func readCookie(c *echo.Context, name string) (string, error) {
 	cookie, err := c.Cookie(name)
@@ -37,13 +31,7 @@ func jwtLog(c *echo.Context, l logger.Interface) logger.Interface {
 	return l
 }
 
-func JWTMiddleware(
-	l logger.Interface,
-	cfg *config.Config,
-	jwtMaker *token.JWTMaker,
-	authGrpcClient authPb.AuthServiceClient,
-	accessChecker AccessRevocationChecker,
-) echo.MiddlewareFunc {
+func JWTMiddleware(l logger.Interface, cfg *config.Config, jwtMaker *token.JWTMaker, authGrpcClient authPb.AuthServiceClient) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
 			log := jwtLog(c, l)
@@ -55,20 +43,8 @@ func JWTMiddleware(
 			}
 			accessClaims, err := jwtMaker.VerifyToken(accessToken, token.TokenTypeAccess)
 			if err == nil {
-				revoked, revErr := accessChecker.IsAccessRevoked(
-					c.Request().Context(),
-					accessClaims.RegisteredClaims.ID,
-					accessClaims.ID,
-					accessClaims.IssuedAt.Time,
-				)
-				if revErr != nil {
-					log.Error(revErr, "JWTMiddleware")
-					return responses.ErrorResponseCustom(c, http.StatusInternalServerError, "internal server error")
-				}
-				if !revoked {
-					c.Set("userID", accessClaims.ID)
-					return next(c)
-				}
+				c.Set("userID", accessClaims.ID)
+				return next(c)
 			}
 			refreshToken, err := readCookie(c, "refresh-token")
 			if err != nil {

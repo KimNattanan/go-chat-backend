@@ -2,7 +2,6 @@ package repo
 
 import (
 	"context"
-	"time"
 
 	"github.com/KimNattanan/go-chat-backend/internal/auth/entity"
 )
@@ -21,14 +20,5 @@ type (
 		Revoke(ctx context.Context, id string) error
 		RevokeAllByUserID(ctx context.Context, userID string) error
 		Delete(ctx context.Context, id string) error
-
-		AcquireRefreshLock(ctx context.Context, sessionID string, ttl time.Duration) (bool, error)
-		ReleaseRefreshLock(ctx context.Context, sessionID string) error
-		SaveRefreshGrace(ctx context.Context, oldSessionID string, grace *entity.RefreshGrace, ttl time.Duration) error
-		FindRefreshGrace(ctx context.Context, oldSessionID string) (*entity.RefreshGrace, error)
-
-		DenylistAccessToken(ctx context.Context, jti string, ttl time.Duration) error
-		InvalidateUserAccessTokens(ctx context.Context, userID string, ttl time.Duration) error
-		IsAccessRevoked(ctx context.Context, jti, userID string, issuedAt time.Time) (bool, error)
 	}
 )

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"strconv"
 	"time"
 
 	"github.com/KimNattanan/go-chat-backend/internal/auth/entity"
@@ -116,13 +115,9 @@ func (r *SessionRepo) Revoke(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-
-	pipe := r.rdb.TxPipeline()
-	pipe.Set(ctx, key, newData, ttl)
-	pipe.Del(ctx, "session:refresh_grace:"+id)
-	_, err = pipe.Exec(ctx)
-	return err
+	return r.rdb.Set(ctx, key, newData, ttl).Err()
 }
+
 func (r *SessionRepo) RevokeAllByUserID(ctx context.Context, userID string) error {
 	userSessionsKey := "user_sessions:" + userID
 	sessionIDs, err := r.rdb.SMembers(ctx, userSessionsKey).Result()
@@ -132,9 +127,6 @@ func (r *SessionRepo) RevokeAllByUserID(ctx context.Context, userID string) erro
 
 	for _, id := range sessionIDs {
 		if err := r.Revoke(ctx, id); err != nil && !errors.Is(err, redis.Nil) {
-			return err
-		}
-		if err := r.rdb.Del(ctx, "session:refresh_lock:"+id).Err(); err != nil {
 			return err
 		}
 	}
@@ -153,88 +145,7 @@ func (r *SessionRepo) Delete(ctx context.Context, id string) error {
 
 	pipe := r.rdb.TxPipeline()
 	pipe.Del(ctx, "session:"+id)
-	pipe.Del(ctx, "session:refresh_grace:"+id)
-	pipe.Del(ctx, "session:refresh_lock:"+id)
 	pipe.SRem(ctx, "user_sessions:"+session.UserID.String(), id)
 	_, err = pipe.Exec(ctx)
 	return err
-}
-
-func (r *SessionRepo) AcquireRefreshLock(ctx context.Context, sessionID string, ttl time.Duration) (bool, error) {
-	err := r.rdb.SetArgs(ctx, "session:refresh_lock:"+sessionID, "1", redis.SetArgs{
-		Mode: "NX",
-		TTL:  ttl,
-	}).Err()
-	if err == nil {
-		return true, nil
-	}
-	if errors.Is(err, redis.Nil) {
-		return false, nil
-	}
-	return false, err
-}
-
-func (r *SessionRepo) ReleaseRefreshLock(ctx context.Context, sessionID string) error {
-	return r.rdb.Del(ctx, "session:refresh_lock:"+sessionID).Err()
-}
-
-func (r *SessionRepo) SaveRefreshGrace(ctx context.Context, oldSessionID string, grace *entity.RefreshGrace, ttl time.Duration) error {
-	data, err := json.Marshal(grace)
-	if err != nil {
-		return err
-	}
-	return r.rdb.Set(ctx, "session:refresh_grace:"+oldSessionID, data, ttl).Err()
-}
-
-func (r *SessionRepo) FindRefreshGrace(ctx context.Context, oldSessionID string) (*entity.RefreshGrace, error) {
-	data, err := r.rdb.Get(ctx, "session:refresh_grace:"+oldSessionID).Bytes()
-	if err != nil {
-		return nil, err
-	}
-	var grace entity.RefreshGrace
-	if err := json.Unmarshal(data, &grace); err != nil {
-		return nil, err
-	}
-	return &grace, nil
-}
-
-func (r *SessionRepo) DenylistAccessToken(ctx context.Context, jti string, ttl time.Duration) error {
-	if jti == "" || ttl <= 0 {
-		return nil
-	}
-	return r.rdb.SetArgs(ctx, "access_denylist:"+jti, "1", redis.SetArgs{TTL: ttl}).Err()
-}
-
-func (r *SessionRepo) InvalidateUserAccessTokens(ctx context.Context, userID string, ttl time.Duration) error {
-	if userID == "" || ttl <= 0 {
-		return nil
-	}
-	// Tokens issued at or before this unix second are rejected.
-	return r.rdb.SetArgs(ctx, "user:"+userID+":access_invalid_before", time.Now().Unix(), redis.SetArgs{TTL: ttl}).Err()
-}
-
-func (r *SessionRepo) IsAccessRevoked(ctx context.Context, jti, userID string, issuedAt time.Time) (bool, error) {
-	n, err := r.rdb.Exists(ctx, "access_denylist:"+jti).Result()
-	if err != nil {
-		return false, err
-	}
-	if n > 0 {
-		return true, nil
-	}
-
-	raw, err := r.rdb.Get(ctx, "user:"+userID+":access_invalid_before").Result()
-	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			return false, nil
-		}
-		return false, err
-	}
-	invalidBefore, err := strconv.ParseInt(raw, 10, 64)
-	if err != nil {
-		return false, err
-	}
-	if !issuedAt.After(time.Unix(invalidBefore, 0)) {
-		return true, nil
-	}
-	return false, nil
 }

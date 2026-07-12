@@ -120,16 +120,12 @@ func clearAuthCookies(c *echo.Context, appEnv string) {
 func (r *V1) logout(c *echo.Context) error {
 	ctx := c.Request().Context()
 
-	accessToken, err := readCookie(c, "access-token")
-	if err != nil {
-		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - logout")
-	}
 	refreshToken, err := readCookie(c, "refresh-token")
 	if err != nil {
 		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - logout")
 	}
 
-	if err := r.authUseCase.Logout(ctx, accessToken, refreshToken); err != nil {
+	if err := r.authUseCase.Logout(ctx, refreshToken); err != nil {
 		return responses.LogAndErrorResponse(c, r.l, err, "rest - v1 - logout")
 	}
 

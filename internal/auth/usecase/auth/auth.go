@@ -1,4 +1,4 @@
-package user
+package auth
 
 import (
 	"context"
@@ -53,9 +53,6 @@ func (u *UseCase) FindUserByEmail(ctx context.Context, email string) (*entity.Us
 func (u *UseCase) DeleteUser(ctx context.Context, id string) error {
 	if err := u.sessionRepo.RevokeAllByUserID(ctx, id); err != nil {
 		return fmt.Errorf("AuthUseCase - DeleteUser - u.sessionRepo.RevokeAllByUserID: %w", err)
-	}
-	if err := u.sessionRepo.InvalidateUserAccessTokens(ctx, id, u.accessTTL); err != nil {
-		return fmt.Errorf("AuthUseCase - DeleteUser - u.sessionRepo.InvalidateUserAccessTokens: %w", err)
 	}
 	if err := u.mqPublisher.Publish("user.deleted", map[string]string{
 		"user_id": id,
@@ -160,138 +157,36 @@ func (u *UseCase) Register(ctx context.Context, email, password, name string) (*
 	return result, nil
 }
 
-func (u *UseCase) Logout(ctx context.Context, accessToken, refreshToken string) error {
+func (u *UseCase) Logout(ctx context.Context, refreshToken string) error {
 	refreshClaims, err := u.jwtMaker.VerifyToken(refreshToken, token.TokenTypeRefresh)
 	if err != nil {
 		return fmt.Errorf("AuthUseCase - Logout - u.jwtMaker.VerifyToken: %w", err)
 	}
-	if err := u.sessionRepo.Revoke(ctx, refreshClaims.RegisteredClaims.ID); err != nil {
-		return fmt.Errorf("AuthUseCase - Logout - u.sessionRepo.Revoke: %w", err)
-	}
-	if accessToken != "" {
-		if accessClaims, err := u.jwtMaker.VerifyToken(accessToken, token.TokenTypeAccess); err == nil {
-			ttl := time.Until(accessClaims.ExpiresAt.Time)
-			if err := u.sessionRepo.DenylistAccessToken(ctx, accessClaims.RegisteredClaims.ID, ttl); err != nil {
-				return fmt.Errorf("AuthUseCase - Logout - u.sessionRepo.DenylistAccessToken: %w", err)
-			}
-		}
+	if err := u.sessionRepo.Delete(ctx, refreshClaims.RegisteredClaims.ID); err != nil {
+		return fmt.Errorf("AuthUseCase - Logout - u.sessionRepo.Delete: %w", err)
 	}
 	return nil
 }
 
-const (
-	refreshGraceTTL    = 30 * time.Second
-	refreshLockTTL     = 10 * time.Second
-	refreshGraceWait   = 2 * time.Second
-	refreshGracePollIn = 50 * time.Millisecond
-)
-
-func (u *UseCase) tokensFromRefreshGrace(ctx context.Context, grace *entity.RefreshGrace) (*usecase.AuthResult, error) {
-	user, err := u.userRepo.FindByID(ctx, grace.UserID)
-	if err != nil {
-		return nil, fmt.Errorf("AuthUseCase - tokensFromRefreshGrace - u.userRepo.FindByID: %w", err)
-	}
-	accessClaims, err := u.jwtMaker.VerifyToken(grace.AccessToken, token.TokenTypeAccess)
-	if err != nil {
-		return nil, fmt.Errorf("AuthUseCase - tokensFromRefreshGrace - access VerifyToken: %w", err)
-	}
-	refreshClaims, err := u.jwtMaker.VerifyToken(grace.RefreshToken, token.TokenTypeRefresh)
-	if err != nil {
-		return nil, fmt.Errorf("AuthUseCase - tokensFromRefreshGrace - refresh VerifyToken: %w", err)
-	}
-	return &usecase.AuthResult{
-		User:          user,
-		AccessToken:   grace.AccessToken,
-		AccessClaims:  accessClaims,
-		RefreshToken:  grace.RefreshToken,
-		RefreshClaims: refreshClaims,
-	}, nil
-}
-
-func (u *UseCase) handleRefreshReuse(ctx context.Context, userID string) error {
-	if err := u.sessionRepo.RevokeAllByUserID(ctx, userID); err != nil {
-		return fmt.Errorf("AuthUseCase - handleRefreshReuse - RevokeAllByUserID: %w", err)
-	}
-	if err := u.sessionRepo.InvalidateUserAccessTokens(ctx, userID, u.accessTTL); err != nil {
-		return fmt.Errorf("AuthUseCase - handleRefreshReuse - InvalidateUserAccessTokens: %w", err)
-	}
-	return apperror.Unauthorized("invalid refresh token", nil)
-}
-
-func (u *UseCase) waitForRefreshGrace(ctx context.Context, oldSessionID, userID string) (*usecase.AuthResult, error) {
-	deadline := time.Now().Add(refreshGraceWait)
-	for {
-		grace, err := u.sessionRepo.FindRefreshGrace(ctx, oldSessionID)
-		if err == nil {
-			if grace.UserID != userID {
-				return nil, apperror.Unauthorized("invalid refresh token", fmt.Errorf("AuthUseCase - waitForRefreshGrace: session user ID does not match"))
-			}
-			return u.tokensFromRefreshGrace(ctx, grace)
-		}
-		if !errors.Is(err, redis.Nil) && time.Now().After(deadline) {
-			return nil, fmt.Errorf("AuthUseCase - waitForRefreshGrace - u.sessionRepo.FindRefreshGrace: %w", err)
-		}
-		if time.Now().After(deadline) {
-			// Grace window elapsed with a revoked session → treat as refresh-token reuse.
-			return nil, u.handleRefreshReuse(ctx, userID)
-		}
-		select {
-		case <-ctx.Done():
-			return nil, fmt.Errorf("AuthUseCase - waitForRefreshGrace: %w", ctx.Err())
-		case <-time.After(refreshGracePollIn):
-		}
-	}
-}
-
 func (u *UseCase) RefreshTokenBySessionID(ctx context.Context, userID, oldSessionID string) (*usecase.AuthResult, error) {
-	if grace, err := u.sessionRepo.FindRefreshGrace(ctx, oldSessionID); err == nil {
-		if grace.UserID != userID {
-			return nil, apperror.Unauthorized("invalid refresh token", fmt.Errorf("AuthUseCase - RefreshTokenBySessionID: session user ID does not match"))
-		}
-		return u.tokensFromRefreshGrace(ctx, grace)
-	}
-
 	session, err := u.sessionRepo.FindByID(ctx, oldSessionID)
 	if err != nil {
-		return nil, fmt.Errorf("AuthUseCase - RefreshTokenBySessionID - u.sessionRepo.FindByID: %w", err)
-	}
-	if session.UserID.String() != userID {
-		return nil, apperror.Unauthorized("invalid refresh token", fmt.Errorf("AuthUseCase - RefreshTokenBySessionID: session user ID does not match"))
-	}
-	if session.IsRevoked {
-		return u.waitForRefreshGrace(ctx, oldSessionID, userID)
-	}
-
-	acquired, err := u.sessionRepo.AcquireRefreshLock(ctx, oldSessionID, refreshLockTTL)
-	if err != nil {
-		return nil, fmt.Errorf("AuthUseCase - RefreshTokenBySessionID - u.sessionRepo.AcquireRefreshLock: %w", err)
-	}
-	if !acquired {
-		return u.waitForRefreshGrace(ctx, oldSessionID, userID)
-	}
-	defer u.sessionRepo.ReleaseRefreshLock(ctx, oldSessionID)
-
-	if grace, err := u.sessionRepo.FindRefreshGrace(ctx, oldSessionID); err == nil {
-		if grace.UserID != userID {
-			return nil, apperror.Unauthorized("invalid refresh token", fmt.Errorf("AuthUseCase - RefreshTokenBySessionID: session user ID does not match"))
+		if errors.Is(err, redis.Nil) {
+			return nil, apperror.Unauthorized("invalid refresh token", err)
 		}
-		return u.tokensFromRefreshGrace(ctx, grace)
-	}
-
-	session, err = u.sessionRepo.FindByID(ctx, oldSessionID)
-	if err != nil {
 		return nil, fmt.Errorf("AuthUseCase - RefreshTokenBySessionID - u.sessionRepo.FindByID: %w", err)
 	}
 	if session.UserID.String() != userID {
 		return nil, apperror.Unauthorized("invalid refresh token", fmt.Errorf("AuthUseCase - RefreshTokenBySessionID: session user ID does not match"))
 	}
 	if session.IsRevoked {
-		return u.waitForRefreshGrace(ctx, oldSessionID, userID)
+		return nil, apperror.Unauthorized("invalid refresh token", nil)
 	}
 
 	if err := u.sessionRepo.Revoke(ctx, oldSessionID); err != nil {
 		return nil, fmt.Errorf("AuthUseCase - RefreshTokenBySessionID - u.sessionRepo.Revoke: %w", err)
 	}
+
 	user, err := u.userRepo.FindByID(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("AuthUseCase - RefreshTokenBySessionID - u.userRepo.FindByID: %w", err)
@@ -301,15 +196,5 @@ func (u *UseCase) RefreshTokenBySessionID(ctx context.Context, userID, oldSessio
 	if err != nil {
 		return nil, fmt.Errorf("AuthUseCase - RefreshTokenBySessionID - %w", err)
 	}
-
-	grace := &entity.RefreshGrace{
-		UserID:       user.ID.String(),
-		AccessToken:  result.AccessToken,
-		RefreshToken: result.RefreshToken,
-	}
-	if err := u.sessionRepo.SaveRefreshGrace(ctx, oldSessionID, grace, refreshGraceTTL); err != nil {
-		return nil, fmt.Errorf("AuthUseCase - RefreshTokenBySessionID - u.sessionRepo.SaveRefreshGrace: %w", err)
-	}
-
 	return result, nil
 }
